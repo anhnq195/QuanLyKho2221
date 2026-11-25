@@ -1,0 +1,134 @@
+@model QuanLyKho2221.Controllers.TestSuiteReport
+@{
+    ViewData["Title"] = "Kiểm thử tự động (Unit & Security Tests)";
+}
+
+<style>
+    @@media print {
+        .sidebar, .topbar, .no-print { display: none !important; }
+        .main-area { margin-left: 0 !important; }
+    }
+</style>
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 no-print">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-Patch-check-fill text-success me-2"></i>
+                Trình chạy Kiểm thử Tự động (Automated Unit & Security Test Suite)
+            </h3>
+            <p class="text-muted small mb-0">
+                Thực thi tự động các kịch bản kiểm thử đơn vị (Unit Test), kiểm thử tích hợp (Integration Test) và kiểm thử bảo mật (SQLi / XSS) trong Transaction Rollback cô lập.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-primary btn-sm">
+                <i class="bi bi-play-circle me-1"></i> Chạy lại toàn bộ kịch bản
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-printer me-1"></i> In biên bản kiểm thử
+            </button>
+        </div>
+    </div>
+
+    <!-- TỔNG QUAN KẾT QUẢ -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Tổng số kịch bản</div>
+                    <h2 class="fw-bold text-primary mb-0">@Model.Results.Count</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Đạt (PASSED)</div>
+                    <h2 class="fw-bold text-success mb-0">@Model.PassedCount / @Model.Results.Count</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Thất bại (FAILED)</div>
+                    <h2 class="fw-bold @(Model.FailedCount == 0 ? "text-muted" : "text-danger") mb-0">@Model.FailedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Tổng thời gian chạy</div>
+                    <h2 class="fw-bold text-dark mb-0">@Model.TotalDurationMs ms</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG CHI TIẾT TỪNG TEST CASE -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <strong>
+                <i class="bi bi-clipboard2-check text-primary me-1"></i>
+                Chi tiết kết quả thực thi kịch bản kiểm thử — Lúc @Model.ExecutedAt.ToString("dd/MM/yyyy HH:mm:ss")
+            </strong>
+            <span class="badge @(Model.FailedCount == 0 ? "bg-success" : "bg-danger")">
+                @(Model.FailedCount == 0 ? "100% PASSED" : $"{Model.FailedCount} FAILED")
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 110px;">Mã TC</th>
+                        <th style="width: 100px;">Task ID</th>
+                        <th>Tên kịch bản & Điều kiện kiểm thử</th>
+                        <th>Kết quả kỳ vọng (Expected)</th>
+                        <th>Kết quả thực tế (Actual)</th>
+                        <th style="width: 90px;" class="text-center">Thời gian</th>
+                        <th style="width: 100px;" class="text-center">Kết luận</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tc in Model.Results)
+                    {
+                        <tr>
+                            <td class="font-monospace fw-bold text-primary">@tc.Code</td>
+                            <td><span class="badge bg-secondary">@tc.TaskRef</span></td>
+                            <td>
+                                <div class="fw-bold">@tc.Title</div>
+                                <div class="small text-muted mt-1">@tc.Scenario</div>
+                            </td>
+                            <td class="small">@tc.Expected</td>
+                            <td class="small font-monospace text-dark">@tc.Actual</td>
+                            <td class="text-center small text-muted">@tc.DurationMs ms</td>
+                            <td class="text-center">
+                                @if (tc.Passed)
+                                {
+                                    <span class="badge bg-success px-3 py-2">
+                                        <i class="bi bi-check-lg me-1"></i>PASS
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger px-3 py-2">
+                                        <i class="bi bi-x-lg me-1"></i>FAIL
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,295 @@
+@model QuanLyKho2221.Models.Product
+@{
+    ViewData["Title"] = $"Chi tiết sản phẩm - {Model.Name}";
+    var batches = Model.Batches?.OrderBy(b => b.ExpiryDate ?? DateTime.MaxValue).ThenByDescending(b => b.CreatedAt).ToList()
+                  ?? new List<QuanLyKho2221.Models.ProductBatch>();
+    var recentImports = ViewBag.RecentImports as List<QuanLyKho2221.Models.ImportReceipt>
+                        ?? new List<QuanLyKho2221.Models.ImportReceipt>();
+    var recentExports = ViewBag.RecentExports as List<QuanLyKho2221.Models.ExportReceipt>
+                        ?? new List<QuanLyKho2221.Models.ExportReceipt>();
+    decimal totalValue = Model.Quantity * Model.Price;
+}
+
+<div class="container-fluid py-3">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary font-monospace fs-6">@(Model.Code ?? $"SP-{Model.Id:D4}")</span>
+                <h3 class="fw-bold mb-0">@Model.Name</h3>
+            </div>
+            <p class="text-muted small mb-0">
+                Danh mục: <strong>@(Model.Category?.Name ?? "Chưa phân nhóm")</strong> •
+                Ngày tạo: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm") •
+                Quản lý HSD: @(Model.HasExpiryDate ? "Bắt buộc có hạn sử dụng" : "Không bắt buộc")
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="StockCards" asp-action="Index" asp-route-productId="@Model.Id" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-journal-text me-1"></i> Xem Thẻ kho
+            </a>
+            <a asp-controller="Imports" asp-action="Create" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-box-arrow-in-down me-1"></i> Nhập thêm hàng
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil-square me-1"></i> Sửa sản phẩm
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Danh sách sản phẩm
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 THẺ KPI THÔNG TIN SẢN PHẨM -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Mã sản phẩm (SKU)</div>
+                    <h4 class="fw-bold text-primary font-monospace mb-1">@(Model.Code ?? $"SP-{Model.Id:D4}")</h4>
+                    <small class="text-muted">Nhóm: @(Model.Category?.Name ?? "Chưa phân loại")</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Tổng tồn kho hiện tại</div>
+                    <h3 class="fw-bold @(Model.Quantity > 5 ? "text-success" : (Model.Quantity > 0 ? "text-warning" : "text-danger")) mb-1">
+                        @Model.Quantity.ToString("N0")
+                    </h3>
+                    <small class="text-muted">
+                        @(Model.Quantity > 5 ? "Đủ định mức an toàn" : (Model.Quantity > 0 ? "Sắp hết hàng (<= 5)" : "Đã hết hàng"))
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Đơn giá &amp; Giá trị tồn</div>
+                    <h4 class="fw-bold text-dark mb-1">@Model.Price.ToString("N0") đ</h4>
+                    <small class="text-muted">Tổng giá trị: <strong>@totalValue.ToString("N0") đ</strong></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Số lô hàng lưu kho</div>
+                    <h3 class="fw-bold text-info mb-1">@batches.Count <small class="fs-6">lô</small></h3>
+                    <small class="text-muted">Đang còn hàng: @batches.Count(b => b.Quantity > 0) lô</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body py-3">
+                <div class="text-muted small fw-semibold mb-1">Mô tả chi tiết sản phẩm</div>
+                <div>@Model.Description</div>
+            </div>
+        </div>
+    }
+
+    <!-- DANH SÁCH LÔ HÀNG CỦA SẢN PHẨM NÀY -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <strong>
+                <i class="bi bi-boxes text-primary me-1"></i>
+                Danh sách các Lô hàng (Batches) của mã sản phẩm @Model.Code (@batches.Count lô)
+            </strong>
+            <a asp-controller="ProductBatches" asp-action="Index" class="btn btn-sm btn-light text-primary fw-semibold">
+                Quản lý tất cả lô hàng <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã lô hàng</th>
+                        <th>Mã sản phẩm</th>
+                        <th>Vị trí lưu kho (Kho › Khu › Kệ › Tầng › Ô)</th>
+                        <th>Ngày sản xuất</th>
+                        <th>Hạn sử dụng</th>
+                        <th class="text-center">Số lượng tồn</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!batches.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Sản phẩm này hiện chưa có lô hàng nào được phân bổ trong kho.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var b in batches)
+                        {
+                            var bin = b.WarehouseBin;
+                            var shelf = bin?.WarehouseShelf;
+                            var area = shelf?.WarehouseArea;
+                            var wh = area?.Warehouse;
+
+                            <tr>
+                                <td>
+                                    <a asp-controller="ProductBatches" asp-action="History" asp-route-id="@b.Id"
+                                       class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-decoration-none">
+                                        @b.BatchCode
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border font-monospace">@Model.Code</span>
+                                </td>
+                                <td>
+                                    @if (wh != null)
+                                    {
+                                        <span class="fw-semibold">@wh.Name</span>
+                                        <span class="text-muted small">
+                                            › @area?.Name › Kệ @shelf?.Code › Tầng @bin?.FloorNumber › <strong>Ô @bin?.Code</strong>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa xác định vị trí</span>
+                                    }
+                                </td>
+                                <td>@(b.ManufactureDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                <td>
+                                    @if (b.ExpiryDate.HasValue)
+                                    {
+                                        <span>@b.ExpiryDate.Value.ToString("dd/MM/yyyy")</span>
+                                        if (b.ExpiryDate.Value.Date < DateTime.Today)
+                                        {
+                                            <span class="badge bg-danger ms-1">Hết hạn</span>
+                                        }
+                                        else if (b.ExpiryDate.Value.Date <= DateTime.Today.AddDays(30))
+                                        {
+                                            <span class="badge bg-warning text-dark ms-1">Sắp hết hạn</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success ms-1">Còn hạn</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Không có</span>
+                                    }
+                                </td>
+                                <td class="text-center fw-bold fs-6">@b.Quantity.ToString("N0")</td>
+                                <td class="text-end">
+                                    <a asp-controller="ProductBatches" asp-action="History" asp-route-id="@b.Id"
+                                       class="btn btn-sm btn-outline-info" title="Truy xuất vòng đời lô">
+                                        <i class="bi bi-diagram-3"></i>
+                                    </a>
+                                    <a asp-controller="Scanner" asp-action="Labels" asp-route-batchIds="@b.Id" target="_blank"
+                                       class="btn btn-sm btn-outline-dark" title="In tem QR/Barcode">
+                                        <i class="bi bi-qr-code"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- LỊCH SỬ NHẬP & XUẤT GẦN ĐÂY -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-box-arrow-in-down text-success me-1"></i>
+                    Phiếu nhập kho gần đây của sản phẩm (@recentImports.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Mã lô</th>
+                                <th>Nhà cung cấp</th>
+                                <th class="text-center">SL</th>
+                                <th>Ngày lập</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!recentImports.Any())
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Chưa có phiếu nhập.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var r in recentImports)
+                                {
+                                    <tr>
+                                        <td><a asp-controller="Imports" asp-action="Details" asp-route-id="@r.Id" class="fw-bold">@r.ReceiptCode</a></td>
+                                        <td class="font-monospace">@(r.BatchCode ?? "—")</td>
+                                        <td>@r.Supplier?.Name</td>
+                                        <td class="text-center fw-bold text-success">+@r.Quantity</td>
+                                        <td class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-box-arrow-up text-danger me-1"></i>
+                    Phiếu xuất kho gần đây của sản phẩm (@recentExports.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Mã lô</th>
+                                <th>Người nhận</th>
+                                <th class="text-center">SL</th>
+                                <th>Ngày lập</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!recentExports.Any())
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Chưa có phiếu xuất.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var r in recentExports)
+                                {
+                                    <tr>
+                                        <td><a asp-controller="Exports" asp-action="Details" asp-route-id="@r.Id" class="fw-bold text-danger">@r.ReceiptCode</a></td>
+                                        <td class="font-monospace">@(r.ProductBatch?.BatchCode ?? "—")</td>
+                                        <td>@(r.Receiver ?? "—")</td>
+                                        <td class="text-center fw-bold text-danger">-@r.Quantity</td>
+                                        <td class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

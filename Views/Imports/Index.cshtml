@@ -1,0 +1,556 @@
+@model IEnumerable<QuanLyKho2221.Models.ImportReceipt>
+
+@{
+    ViewData["Title"] = "Danh sách phiếu nhập kho";
+
+    var receipts = Model?.ToList() ?? new List<QuanLyKho2221.Models.ImportReceipt>();
+
+    int totalCount = (int)(ViewBag.TotalReceipts ?? 0);
+    int pendingCount = (int)(ViewBag.PendingReceipts ?? 0);
+    int approvedCount = (int)(ViewBag.ApprovedReceipts ?? 0);
+    int rejectedCount = (int)(ViewBag.RejectedReceipts ?? 0);
+    int cancelledCount = (int)(ViewBag.CancelledReceipts ?? 0);
+    int totalImportedQuantity = (int)(ViewBag.TotalImportedQuantity ?? 0);
+
+    string currentStatus = ViewBag.Status?.ToString() ?? "";
+
+    string StatusText(string status) => status switch
+    {
+        ReceiptStatus.Pending => "Chờ duyệt",
+        ReceiptStatus.Approved => "Đã duyệt",
+        ReceiptStatus.Rejected => "Từ chối",
+        ReceiptStatus.Cancelled => "Đã hủy",
+        _ => status
+    };
+
+    string StatusClass(string status) => status switch
+    {
+        ReceiptStatus.Pending => "status-pending",
+        ReceiptStatus.Approved => "status-approved",
+        ReceiptStatus.Rejected => "status-rejected",
+        ReceiptStatus.Cancelled => "status-cancelled",
+        _ => "status-default"
+    };
+}
+
+<style>
+    .import-page {
+        padding-bottom: 30px;
+    }
+
+    .import-card {
+        border: none;
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(0,0,0,.055);
+    }
+
+    .stat-card {
+        border: none;
+        border-radius: 14px;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,.09);
+        }
+
+    .stat-icon {
+        width: 43px;
+        height: 43px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 20px;
+    }
+
+    .import-table {
+        min-width: 1100px;
+        margin-bottom: 0;
+    }
+
+        .import-table thead th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 15px 13px;
+            white-space: nowrap;
+            border-bottom: 1px solid #dce3eb;
+        }
+
+        .import-table tbody td {
+            padding: 14px 13px;
+            vertical-align: middle;
+            font-size: 13px;
+            border-color: #e5eaf0;
+        }
+
+        .import-table tbody tr:hover {
+            background-color: #f8fbff;
+        }
+
+    .table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 10px;
+    }
+
+    .receipt-code {
+        color: #0d6efd;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+        .receipt-code:hover {
+            text-decoration: underline;
+        }
+
+    .batch-code {
+        display: inline-block;
+        padding: 5px 9px;
+        background: #f8fafc;
+        border: 1px solid #dce3eb;
+        border-radius: 7px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-approved {
+        background: #d1e7dd;
+        color: #146c43;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+        color: #b02a37;
+    }
+
+    .status-cancelled {
+        background: #e2e3e5;
+        color: #41464b;
+    }
+
+    .status-default {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .location-name {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .location-detail {
+        color: #64748b;
+        font-size: 11px;
+        margin-top: 4px;
+        white-space: nowrap;
+    }
+
+    .filter-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 7px;
+    }
+
+    @@media (max-width: 768px) {
+        .import-page {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .import-card .card-body {
+            padding: 16px !important;
+        }
+
+        .page-heading h2 {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<div class="container-fluid mt-4 import-page">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 page-heading">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-box-arrow-in-down text-primary me-2"></i>
+                Phiếu nhập kho
+            </h2>
+            <p class="text-muted mb-0">
+                Quản lý và theo dõi các phiếu nhập hàng vào kho.
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary px-3">
+            <i class="bi bi-plus-circle me-1"></i>
+            Tạo phiếu nhập
+        </a>
+    </div>
+
+    <!-- THÔNG BÁO -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- THỐNG KÊ -->
+    <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3 mb-4">
+
+        <!-- TỔNG PHIẾU -->
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Tổng phiếu</span>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-primary mb-1">@totalCount.ToString("N0")</h3>
+                    <small class="text-muted">Tất cả phiếu nhập</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHỜ DUYỆT -->
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Chờ duyệt</span>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-warning mb-1">@pendingCount.ToString("N0")</h3>
+                    <small class="text-muted">Đang chờ xử lý</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ĐÃ DUYỆT -->
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Đã duyệt</span>
+                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-success mb-1">@approvedCount.ToString("N0")</h3>
+                    <small class="text-muted">Phiếu đã được duyệt</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- TỪ CHỐI -->
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Từ chối</span>
+                        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-danger mb-1">
+                        @rejectedCount.ToString("N0")
+                    </h3>
+                    <small class="text-muted">Phiếu bị từ chối</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ĐÃ HỦY -->
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Đã hủy</span>
+                        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                            <i class="bi bi-trash"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-secondary mb-1">
+                        @cancelledCount.ToString("N0")
+                    </h3>
+                    <small class="text-muted">Phiếu đã hủy</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- SỐ LƯỢNG ĐÃ NHẬP -->
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Số lượng đã nhập</span>
+                        <div class="stat-icon bg-info bg-opacity-10 text-info">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-info mb-1">
+                        @totalImportedQuantity.ToString("N0")
+                    </h3>
+                    <small class="text-muted">Tổng hàng đã nhập kho</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TÌM KIẾM VÀ LỌC -->
+    <div class="card import-card mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-search text-primary me-2"></i>
+                Tìm kiếm và lọc phiếu nhập
+            </h5>
+
+            <form asp-action="Index" method="get">
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-lg-3 col-md-6">
+                        <label class="filter-label">Từ khóa</label>
+                        <input type="text"
+                               name="searchString"
+                               value="@ViewBag.SearchString"
+                               class="form-control"
+                               placeholder="Mã phiếu, sản phẩm, nhà cung cấp, mã lô..." />
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="filter-label">Từ ngày</label>
+                        <input type="date"
+                               name="fromDate"
+                               value="@ViewBag.FromDate"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="filter-label">Đến ngày</label>
+                        <input type="date"
+                               name="toDate"
+                               value="@ViewBag.ToDate"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <label class="filter-label">Trạng thái</label>
+                        <select name="status" class="form-select">
+                            <option value="">Tất cả trạng thái</option>
+
+                            <option value="@ReceiptStatus.Pending"
+                                    selected="@(currentStatus == ReceiptStatus.Pending)">
+                                Chờ duyệt
+                            </option>
+
+                            <option value="@ReceiptStatus.Approved"
+                                    selected="@(currentStatus == ReceiptStatus.Approved)">
+                                Đã duyệt
+                            </option>
+
+                            <option value="@ReceiptStatus.Rejected"
+                                    selected="@(currentStatus == ReceiptStatus.Rejected)">
+                                Từ chối
+                            </option>
+
+                            <option value="@ReceiptStatus.Cancelled"
+                                    selected="@(currentStatus == ReceiptStatus.Cancelled)">
+                                Đã hủy
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search me-1"></i>
+                            Lọc
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary"
+                           title="Làm mới">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DANH SÁCH PHIẾU NHẬP -->
+    <div class="card import-card">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-list-ul text-primary me-2"></i>
+                    Danh sách phiếu nhập
+                </h5>
+
+                <span class="badge bg-light text-dark border px-3 py-2">
+                    Kết quả: @receipts.Count phiếu
+                </span>
+            </div>
+
+            <div class="table-scroll">
+                <table class="table table-hover align-middle import-table">
+
+                    <thead>
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Nhà cung cấp</th>
+                            <th>Sản phẩm</th>
+                            <th>Mã lô</th>
+                            <th>Vị trí lưu kho</th>
+                            <th class="text-end">Số lượng</th>
+                            <th>Ngày tạo</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (receipts.Any())
+                        {
+                            @foreach (var item in receipts)
+                            {
+                                var bin = item.WarehouseBin;
+                                var shelf = bin?.WarehouseShelf;
+                                var area = shelf?.WarehouseArea;
+                                var warehouse = area?.Warehouse;
+
+                                <tr>
+                                    <td>
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="receipt-code">
+                                            @item.ReceiptCode
+                                        </a>
+                                    </td>
+
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @(item.Supplier?.Name ?? "Không xác định")
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @(item.Product?.Name ?? "Không xác định")
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="batch-code">
+                                            @(item.BatchCode ?? item.ProductBatch?.BatchCode ?? "Chưa có")
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @if (bin != null)
+                                        {
+                                            <div class="location-name">
+                                                @bin.Code - @bin.Name
+                                            </div>
+
+                                            <div class="location-detail">
+                                                @(warehouse?.Name ?? "Chưa có kho") /
+                                                @(area?.Name ?? "Chưa có khu vực") /
+                                                @(shelf?.Name ?? "Chưa có kệ")
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa xác định</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-end fw-semibold">
+                                        @item.Quantity.ToString("N0")
+                                    </td>
+
+                                    <td class="text-nowrap">
+                                        @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+
+                                    <td>
+                                        <span class="status-badge @StatusClass(item.Status)">
+                                            @StatusText(item.Status)
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <i class="bi bi-eye me-1"></i>
+                                            Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                                    <strong>Không tìm thấy phiếu nhập nào.</strong>
+                                    <div class="text-muted small mt-1">
+                                        Hãy thử thay đổi điều kiện tìm kiếm hoặc tạo phiếu mới.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+            <div class="text-muted small mt-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Kéo thanh cuộn ngang bên dưới để xem đầy đủ các cột khi màn hình không đủ rộng.
+            </div>
+
+        </div>
+    </div>
+
+</div>

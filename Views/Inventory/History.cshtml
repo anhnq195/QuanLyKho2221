@@ -1,0 +1,327 @@
+﻿@model QuanLyKho2221.Models.ProductHistoryViewModel
+
+@{
+    ViewData["Title"] = "Lịch sử sản phẩm";
+
+    var imports = Model.Imports?.ToList() ?? new();
+    var exports = Model.Exports?.ToList() ?? new();
+
+    int totalImport = imports.Sum(x => x.Quantity);
+    int totalExport = exports.Sum(x => x.Quantity);
+
+    decimal totalImportValue = imports.Sum(x => x.TotalAmount);
+    decimal totalExportValue = exports.Sum(x => x.TotalAmount);
+
+    int currentQuantity = Model.Product.Quantity;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-clock-history text-primary me-2"></i>
+                Lịch sử sản phẩm
+            </h2>
+            <p class="text-muted mb-0">
+                Theo dõi toàn bộ quá trình nhập và xuất hàng hóa
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại tồn kho
+        </a>
+    </div>
+
+    <!-- THÔNG TIN SẢN PHẨM -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="history-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+
+                <div>
+                    <h4 class="fw-bold mb-1">@Model.Product.Name</h4>
+                    <span class="text-muted">
+                        Mã sản phẩm: @(Model.Product.Code ?? "Chưa có mã")
+                    </span>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <p class="text-muted mb-1">Số lượng hiện tại</p>
+                    <h4 class="fw-bold text-primary mb-0">
+                        @currentQuantity.ToString("N0")
+                    </h4>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <p class="text-muted mb-1">Đơn giá hiện tại</p>
+                    <h4 class="fw-bold mb-0">
+                        @Model.Product.Price.ToString("N0") đ
+                    </h4>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <p class="text-muted mb-1">Giá trị tồn kho hiện tại</p>
+                    <h4 class="fw-bold text-success mb-0">
+                        @((currentQuantity * Model.Product.Price).ToString("N0")) đ
+                    </h4>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- THỐNG KÊ NHẬP XUẤT -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 history-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-2">Tổng đã nhập</p>
+                            <h3 class="fw-bold text-success mb-0">
+                                @totalImport.ToString("N0")
+                            </h3>
+                        </div>
+
+                        <div class="history-icon bg-success-subtle text-success">
+                            <i class="bi bi-box-arrow-in-down"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 history-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-2">Tổng đã xuất</p>
+                            <h3 class="fw-bold text-danger mb-0">
+                                @totalExport.ToString("N0")
+                            </h3>
+                        </div>
+
+                        <div class="history-icon bg-danger-subtle text-danger">
+                            <i class="bi bi-box-arrow-up"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 history-card">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Giá trị nhập</p>
+                    <h4 class="fw-bold text-success mb-0">
+                        @totalImportValue.ToString("N0") đ
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 history-card">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Giá trị xuất</p>
+                    <h4 class="fw-bold text-danger mb-0">
+                        @totalExportValue.ToString("N0") đ
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LỊCH SỬ NHẬP -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h5 class="fw-bold text-success mb-1">
+                        <i class="bi bi-box-arrow-in-down me-2"></i>
+                        Lịch sử nhập hàng
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Có @imports.Count phiếu nhập
+                    </p>
+                </div>
+
+                <span class="badge bg-success-subtle text-success px-3 py-2">
+                    @totalImport.ToString("N0") sản phẩm
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Nhà cung cấp</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                            <th>Ngày nhập</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!imports.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Chưa có lịch sử nhập hàng.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in imports)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.ReceiptCode</td>
+                                    <td>@(item.Supplier?.Name ?? "Không rõ")</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-subtle text-success">
+                                            +@item.Quantity
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        @item.UnitPrice.ToString("N0") đ
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                        @item.TotalAmount.ToString("N0") đ
+                                    </td>
+                                    <td>
+                                        @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- LỊCH SỬ XUẤT -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h5 class="fw-bold text-danger mb-1">
+                        <i class="bi bi-box-arrow-up me-2"></i>
+                        Lịch sử xuất hàng
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Có @exports.Count phiếu xuất
+                    </p>
+                </div>
+
+                <span class="badge bg-danger-subtle text-danger px-3 py-2">
+                    @totalExport.ToString("N0") sản phẩm
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Người nhận</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                            <th>Ngày xuất</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!exports.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Chưa có lịch sử xuất hàng.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in exports)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.ReceiptCode</td>
+                                    <td>@item.Receiver</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            -@item.Quantity
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        @item.UnitPrice.ToString("N0") đ
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                        @item.TotalAmount.ToString("N0") đ
+                                    </td>
+                                    <td>
+                                        @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .history-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .history-card {
+        border-radius: 14px;
+        transition: transform 0.2s ease;
+    }
+
+        .history-card:hover {
+            transform: translateY(-3px);
+        }
+
+    .table th {
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .table td {
+        font-size: 14px;
+    }
+</style>

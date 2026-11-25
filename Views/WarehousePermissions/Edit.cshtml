@@ -1,0 +1,91 @@
+﻿@model QuanLyKho2221.Models.WarehousePermissionViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa phân quyền";
+}
+
+<div class="container py-3">
+    <div class="mb-4">
+        <h3 class="fw-bold">Chỉnh sửa phân quyền</h3>
+        <p class="text-muted">Cập nhật quyền truy cập kho của nhân viên.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="UserId" class="form-label">Nhân viên</label>
+                    <select asp-for="UserId"
+                            asp-items="ViewBag.Users"
+                            class="form-select">
+                        <option value="">-- Chọn nhân viên --</option>
+                    </select>
+                    <span asp-validation-for="UserId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="WarehouseId" class="form-label">Kho</label>
+                    <select asp-for="WarehouseId"
+                            asp-items="ViewBag.Warehouses"
+                            class="form-select">
+                        <option value="">-- Chọn kho --</option>
+                    </select>
+                    <span asp-validation-for="WarehouseId" class="text-danger"></span>
+                </div>
+
+                <h5 class="fw-semibold mb-3">Các quyền được cấp</h5>
+
+                <div class="border rounded p-3 mb-4">
+                    <div class="form-check mb-3">
+                        <input asp-for="CanView" class="form-check-input" />
+                        <label asp-for="CanView" class="form-check-label">
+                            Quyền xem kho
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="CanImport" class="form-check-input" />
+                        <label asp-for="CanImport" class="form-check-label">
+                            Quyền nhập kho
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="CanExport" class="form-check-input" />
+                        <label asp-for="CanExport" class="form-check-label">
+                            Quyền xuất kho
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input asp-for="CanManage" class="form-check-input" />
+                        <label asp-for="CanManage" class="form-check-label">
+                            Quyền quản lý kho
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Lưu thay đổi
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

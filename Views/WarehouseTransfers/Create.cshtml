@@ -1,0 +1,129 @@
+﻿@model QuanLyKho2221.Models.WarehouseTransfer
+
+@{
+    ViewData["Title"] = "Tạo phiếu điều chuyển";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Điều chuyển hàng hóa</h2>
+            <p class="text-muted mb-0">
+                Chuyển hàng từ ô kho này sang ô kho khác
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Lô hàng cần điều chuyển
+                        </label>
+                        <select asp-for="ProductBatchId"
+                                asp-items="ViewBag.ProductBatches"
+                                class="form-select">
+                            <option value="">-- Chọn lô hàng --</option>
+                        </select>
+                        <span asp-validation-for="ProductBatchId"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TransferDate"
+                               class="form-label fw-semibold">
+                            Ngày điều chuyển
+                        </label>
+                        <input asp-for="TransferDate"
+                               type="datetime-local"
+                               class="form-control"
+                               value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="SourceBinId"
+                               class="form-label fw-semibold">
+                            Ô kho nguồn
+                        </label>
+                        <select asp-for="SourceBinId"
+                                asp-items="ViewBag.Bins"
+                                class="form-select">
+                            <option value="">-- Chọn ô nguồn --</option>
+                        </select>
+                        <span asp-validation-for="SourceBinId"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="DestinationBinId"
+                               class="form-label fw-semibold">
+                            Ô kho đích
+                        </label>
+                        <select asp-for="DestinationBinId"
+                                asp-items="ViewBag.Bins"
+                                class="form-select">
+                            <option value="">-- Chọn ô đích --</option>
+                        </select>
+                        <span asp-validation-for="DestinationBinId"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Quantity"
+                               class="form-label fw-semibold">
+                            Số lượng điều chuyển
+                        </label>
+                        <input asp-for="Quantity"
+                               type="number"
+                               min="1"
+                               class="form-control"
+                               placeholder="Nhập số lượng" />
+                        <span asp-validation-for="Quantity"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Note"
+                               class="form-label fw-semibold">
+                            Ghi chú
+                        </label>
+                        <input asp-for="Note"
+                               class="form-control"
+                               placeholder="Nhập ghi chú nếu có" />
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index"
+                       class="btn btn-light">
+                        Hủy
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary px-4">
+                        Xác nhận điều chuyển
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

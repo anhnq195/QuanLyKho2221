@@ -1,0 +1,113 @@
+﻿@model QuanLyKho2221.Models.WarehouseShelf
+
+@{
+    ViewData["Title"] = "Sửa kệ";
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-pencil-square text-primary me-2"></i>
+            Sửa thông tin kệ
+        </h2>
+        <p class="text-muted mb-0">
+            Cập nhật thông tin kệ trong khu vực kho
+        </p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-grid text-primary me-2"></i>
+                        Thông tin kệ
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-building me-2"></i>
+                        Khu vực:
+                        <strong>@ViewBag.AreaName</strong>
+                    </div>
+
+                    <form asp-action="Edit" method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="WarehouseAreaId" />
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="alert alert-danger">
+                        </div>
+
+                        <!-- MÃ KỆ -->
+                        <div class="mb-3">
+                            <label asp-for="Code" class="form-label">
+                                Mã kệ
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input asp-for="Code"
+                                   class="form-control"
+                                   placeholder="Nhập mã kệ" />
+
+                            <span asp-validation-for="Code"
+                                  class="text-danger small">
+                            </span>
+                        </div>
+
+                        <!-- TÊN KỆ -->
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">
+                                Tên kệ
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Nhập tên kệ" />
+
+                            <span asp-validation-for="Name"
+                                  class="text-danger small">
+                            </span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="d-flex gap-2 flex-wrap">
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>
+                                Lưu thay đổi
+                            </button>
+
+                            <a asp-action="Index"
+                               asp-route-areaId="@Model.WarehouseAreaId"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Quay lại
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

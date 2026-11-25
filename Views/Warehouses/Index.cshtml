@@ -1,0 +1,248 @@
+﻿@model IEnumerable<QuanLyKho2221.Models.Warehouse>
+
+@{
+    ViewData["Title"] = "Quản lý kho";
+    var warehouses = Model?.ToList() ?? new List<QuanLyKho2221.Models.Warehouse>();
+    var totalWarehouses = warehouses.Count;
+    var activeWarehouses = warehouses.Count(w => w.IsActive);
+    var totalAreas = warehouses.Sum(w => w.Areas?.Count ?? 0);
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-buildings text-primary me-2"></i>
+                Quản lý kho
+            </h2>
+            <p class="text-muted mb-0">
+                Quản lý danh sách kho hàng trong hệ thống
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary px-3">
+            <i class="bi bi-plus-lg me-1"></i>
+            Thêm kho mới
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- THỐNG KÊ -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Tổng số kho</p>
+                            <h3 class="fw-bold mb-0">@totalWarehouses</h3>
+                        </div>
+                        <div class="rounded-3 bg-primary bg-opacity-10 p-3">
+                            <i class="bi bi-buildings text-primary fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Kho đang hoạt động</p>
+                            <h3 class="fw-bold text-success mb-0">@activeWarehouses</h3>
+                        </div>
+                        <div class="rounded-3 bg-success bg-opacity-10 p-3">
+                            <i class="bi bi-check-circle text-success fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Tổng khu vực</p>
+                            <h3 class="fw-bold text-primary mb-0">@totalAreas</h3>
+                        </div>
+                        <div class="rounded-3 bg-info bg-opacity-10 p-3">
+                            <i class="bi bi-grid text-info fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DANH SÁCH KHO -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-list-ul text-primary me-2"></i>
+                    Danh sách kho hàng
+                </h5>
+
+                <span class="badge bg-primary">
+                    @totalWarehouses kho
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th class="ps-3">STT</th>
+                            <th>Mã kho</th>
+                            <th>Tên kho</th>
+                            <th>Địa chỉ</th>
+                            <th>Người quản lý</th>
+                            <th>Khu vực</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center pe-3">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (warehouses.Any())
+                        {
+                            var stt = 1;
+
+                            foreach (var item in warehouses)
+                            {
+                                <tr>
+                                    <td class="ps-3">@stt</td>
+
+                                    <td>
+                                        <span class="fw-bold text-primary">
+                                            @item.Code
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="fw-semibold">
+                                            @item.Name
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(item.Address)
+                                            ? "Chưa cập nhật"
+                                            : item.Address)
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(item.ManagerName)
+                                            ? "Chưa cập nhật"
+                                            : item.ManagerName)
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-info text-dark">
+                                            @(item.Areas?.Count ?? 0) khu vực
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                Hoạt động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-pause-circle me-1"></i>
+                                                Ngừng hoạt động
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center pe-3">
+                                        <div class="d-flex justify-content-center gap-1 flex-wrap">
+
+                                            <a asp-action="Details"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-info"
+                                               title="Xem chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Sửa kho">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-danger"
+                                               title="Xóa kho">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                stt++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                                    <h6 class="text-muted">Chưa có kho hàng nào</h6>
+                                    <p class="text-muted small mb-3">
+                                        Hãy thêm kho mới để bắt đầu quản lý.
+                                    </p>
+
+                                    <a asp-action="Create" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-plus-lg me-1"></i>
+                                        Thêm kho mới
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,140 @@
+﻿@model QuanLyKho2221.Models.ProductBatch
+
+@{
+    ViewData["Title"] = "Sửa lô hàng";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+
+        <h2 class="fw-bold mt-3 mb-1">
+            <i class="bi bi-pencil-square text-primary me-2"></i>Sửa thông tin lô hàng
+        </h2>
+        <p class="text-muted mb-0">Cập nhật thông tin và vị trí lưu kho của lô hàng.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-box-seam me-2"></i>Thông tin lô hàng
+        </div>
+
+        <div class="card-body p-4">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Lô hàng đã có lịch sử phiếu nhập hoặc phiếu xuất sẽ không được phép chỉnh sửa để bảo vệ dữ liệu tồn kho.
+            </div>
+
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-info-circle text-primary me-2"></i>Thông tin sản phẩm
+                </h5>
+
+                <div class="mb-3">
+                    <label asp-for="ProductId" class="form-label">Sản phẩm</label>
+
+                    <select asp-for="ProductId"
+                            asp-items="ViewBag.ProductId"
+                            class="form-select">
+                        <option value="">-- Chọn sản phẩm --</option>
+                    </select>
+
+                    <span asp-validation-for="ProductId" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="WarehouseBinId" class="form-label">Ô chứa</label>
+
+                    <select asp-for="WarehouseBinId"
+                            asp-items="ViewBag.WarehouseBinId"
+                            class="form-select">
+                        <option value="">-- Chọn ô chứa --</option>
+                    </select>
+
+                    <span asp-validation-for="WarehouseBinId" class="text-danger small"></span>
+                </div>
+
+                <hr class="my-4" />
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-upc-scan text-primary me-2"></i>Thông tin lô
+                </h5>
+
+                <div class="mb-3">
+                    <label asp-for="BatchCode" class="form-label">Mã lô hàng</label>
+
+                    <input asp-for="BatchCode"
+                           class="form-control"
+                           maxlength="50" />
+
+                    <span asp-validation-for="BatchCode" class="text-danger small"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ManufactureDate" class="form-label">Ngày sản xuất</label>
+
+                        <input asp-for="ManufactureDate"
+                               type="date"
+                               asp-format="{0:yyyy-MM-dd}"
+                               class="form-control" />
+
+                        <span asp-validation-for="ManufactureDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ExpiryDate" class="form-label">Hạn sử dụng</label>
+
+                        <input asp-for="ExpiryDate"
+                               type="date"
+                               asp-format="{0:yyyy-MM-dd}"
+                               class="form-control" />
+
+                        <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-boxes text-primary me-2"></i>Số lượng tồn kho
+                </h5>
+
+                <div class="mb-3">
+                    <label asp-for="Quantity" class="form-label">Số lượng</label>
+
+                    <input asp-for="Quantity"
+                           type="number"
+                           min="0"
+                           class="form-control" />
+
+                    <span asp-validation-for="Quantity" class="text-danger small"></span>
+                </div>
+
+                <hr />
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Lưu thay đổi
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

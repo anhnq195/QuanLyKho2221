@@ -1,0 +1,150 @@
+﻿@model QuanLyKho2221.Models.Warehouse
+
+@{
+    ViewData["Title"] = "Thêm kho mới";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-plus-circle text-primary me-2"></i>
+                Thêm kho mới
+            </h2>
+            <p class="text-muted mb-0">
+                Nhập thông tin để tạo kho hàng mới
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="bi bi-warehouse text-primary me-2"></i>
+                Thông tin kho hàng
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"
+                     role="alert">
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label asp-for="Code" class="form-label">
+                            Mã kho <span class="text-danger">*</span>
+                        </label>
+
+                        <input asp-for="Code"
+                               class="form-control"
+                               placeholder="Ví dụ: KHO02" />
+
+                        <span asp-validation-for="Code"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label">
+                            Tên kho <span class="text-danger">*</span>
+                        </label>
+
+                        <input asp-for="Name"
+                               class="form-control"
+                               placeholder="Nhập tên kho" />
+
+                        <span asp-validation-for="Name"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Address" class="form-label">
+                            Địa chỉ
+                        </label>
+
+                        <input asp-for="Address"
+                               class="form-control"
+                               placeholder="Nhập địa chỉ kho" />
+
+                        <span asp-validation-for="Address"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ManagerName" class="form-label">
+                            Người quản lý
+                        </label>
+
+                        <input asp-for="ManagerName"
+                               class="form-control"
+                               placeholder="Nhập tên người quản lý" />
+
+                        <span asp-validation-for="ManagerName"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label">
+                            Mô tả
+                        </label>
+
+                        <textarea asp-for="Description"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Nhập mô tả về kho"></textarea>
+
+                        <span asp-validation-for="Description"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check p-3 border rounded-3 bg-light">
+                            <input asp-for="IsActive"
+                                   class="form-check-input ms-0 me-2" />
+
+                            <label asp-for="IsActive"
+                                   class="form-check-label fw-semibold">
+                                Kho đang hoạt động
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i>
+                        Lưu kho
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary px-4">
+                        Hủy
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

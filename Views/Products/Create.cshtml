@@ -1,0 +1,191 @@
+@model QuanLyKho2221.Models.Product
+
+@{
+    ViewData["Title"] = "Thêm sản phẩm";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">Thêm sản phẩm mới</h2>
+            <p class="text-muted mb-0">Nhập thông tin sản phẩm vào kho</p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card border-0">
+        <div class="card-header">
+            <i class="bi bi-box-seam me-2"></i>Thông tin sản phẩm
+        </div>
+
+        <div class="card-body p-4">
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="All"
+                     class="alert alert-danger"
+                     role="alert"></div>
+
+                <div class="mb-4">
+                    <label class="form-label">Mã sản phẩm</label>
+                    <input type="text"
+                           class="form-control bg-light"
+                           value="Tự động tạo khi lưu"
+                           readonly />
+
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Hệ thống tự động cấp mã sản phẩm.
+                    </small>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">
+                        Tên sản phẩm <span class="text-danger">*</span>
+                    </label>
+
+                    <input asp-for="Name"
+                           class="form-control"
+                           placeholder="Nhập tên sản phẩm..." />
+
+                    <span asp-validation-for="Name"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="form-label">
+                        Danh mục sản phẩm
+                    </label>
+
+                    <select asp-for="CategoryId"
+                            asp-items="ViewBag.CategoryId"
+                            class="form-select">
+                        <option value="">-- Chọn danh mục --</option>
+                    </select>
+
+                    <span asp-validation-for="CategoryId"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">
+                        Mô tả sản phẩm
+                    </label>
+
+                    <textarea asp-for="Description"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Nhập mô tả sản phẩm..."></textarea>
+
+                    <span asp-validation-for="Description"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Quantity" class="form-label">
+                            Số lượng ban đầu
+                        </label>
+
+                        <div class="input-group">
+                            <input asp-for="Quantity"
+                                   type="number"
+                                   min="0"
+                                   class="form-control" />
+
+                            <span class="input-group-text">Sản phẩm</span>
+                        </div>
+
+                        <span asp-validation-for="Quantity"
+                              class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Price" class="form-label">
+                            Đơn giá
+                        </label>
+
+                        <div class="input-group">
+                            <input asp-for="Price"
+                                   type="number"
+                                   min="0"
+                                   step="0.01"
+                                   class="form-control" />
+
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+
+                        <span asp-validation-for="Price"
+                              class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input asp-for="HasExpiryDate" class="form-check-input" />
+                    <label asp-for="HasExpiryDate" class="form-check-label fw-semibold">
+                        Sản phẩm có hạn sử dụng (Bắt buộc nhập HSD khi nhập kho)
+                    </label>
+                </div>
+
+                @{
+                    var allSuppliers = ViewBag.AllSuppliers as List<QuanLyKho2221.Models.Supplier> ?? new();
+                    var selectedSuppliers = ViewBag.SelectedSupplierIds as HashSet<int> ?? new HashSet<int>();
+                }
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-truck text-primary me-1"></i>Nhà cung cấp cung ứng sản phẩm này
+                    </label>
+                    <div class="border rounded-3 p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
+                        @if (!allSuppliers.Any())
+                        {
+                            <div class="text-muted small">Chưa có nhà cung cấp nào trong hệ thống.</div>
+                        }
+                        else
+                        {
+                            <div class="row g-2">
+                                @foreach (var s in allSuppliers)
+                                {
+                                    <div class="col-md-6">
+                                        <label class="d-flex align-items-center gap-2 p-2 rounded bg-white border" style="cursor: pointer;">
+                                            <input type="checkbox"
+                                                   name="supplierIds"
+                                                   value="@s.Id"
+                                                   class="form-check-input mt-0"
+                                                   checked="@(selectedSuppliers.Contains(s.Id))" />
+                                            <span class="fw-semibold small">@s.Name</span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <small class="text-muted">Chỉ những nhà cung cấp được chọn mới có thể cung ứng sản phẩm này khi lập phiếu nhập kho.</small>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Lưu sản phẩm
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                        Hủy
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

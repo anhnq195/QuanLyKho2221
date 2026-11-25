@@ -1,0 +1,317 @@
+@model IEnumerable<QuanLyKho2221.Models.ProductBatch>
+
+@{
+    ViewData["Title"] = "Quản lý lô hàng";
+    var batches = Model?.ToList() ?? new List<QuanLyKho2221.Models.ProductBatch>();
+    var totalQuantity = batches.Sum(x => x.Quantity);
+    var expiredCount = batches.Count(x => x.ExpiryDate.HasValue && x.ExpiryDate.Value.Date < DateTime.Today);
+    var nearExpiryCount = batches.Count(x => x.ExpiryDate.HasValue &&
+        x.ExpiryDate.Value.Date >= DateTime.Today &&
+        x.ExpiryDate.Value.Date <= DateTime.Today.AddDays(30));
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-boxes text-primary me-2"></i>Quản lý lô hàng
+            </h2>
+            <p class="text-muted mb-0">Theo dõi số lượng, vị trí lưu kho và hạn sử dụng.</p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" id="btnPrintSelected" class="btn btn-outline-dark" disabled>
+                <i class="bi bi-qr-code me-1"></i> In tem đã chọn (<span id="selectedCount">0</span>)
+            </button>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Thêm lô hàng
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 bg-primary bg-opacity-10 p-3">
+                        <i class="bi bi-box-seam fs-3 text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Tổng số lô hàng</div>
+                        <h3 class="fw-bold mb-0">@batches.Count</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 bg-success bg-opacity-10 p-3">
+                        <i class="bi bi-boxes fs-3 text-success"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Tổng số lượng tồn</div>
+                        <h3 class="fw-bold mb-0">@totalQuantity.ToString("N0")</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 bg-danger bg-opacity-10 p-3">
+                        <i class="bi bi-calendar-x fs-3 text-danger"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Lô đã hết hạn</div>
+                        <h3 class="fw-bold mb-0">@expiredCount</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (nearExpiryCount > 0)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            Có <strong>@nearExpiryCount</strong> lô hàng sắp hết hạn trong vòng 30 ngày.
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>
+                <i class="bi bi-list-ul me-2"></i>Danh sách lô hàng
+            </strong>
+            <span class="badge bg-primary">@batches.Count lô hàng</span>
+        </div>
+
+        <div class="card-body">
+            @if (batches.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width:36px;">
+                                    <input type="checkbox" class="form-check-input" id="chkAll" title="Chọn tất cả" />
+                                </th>
+                                <th>Mã lô</th>
+                                <th>Mã sản phẩm</th>
+                                <th>Sản phẩm</th>
+                                <th>Vị trí lưu kho</th>
+                                <th>Ngày sản xuất</th>
+                                <th>Hạn sử dụng</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var batch in batches)
+                            {
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input chk-batch" value="@batch.Id" />
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-primary font-monospace">@batch.BatchCode</span>
+                                        <small class="d-block text-muted font-monospace">WMS-B@(batch.Id)</small>
+                                    </td>
+
+                                    <td>
+                                        <a asp-controller="Products"
+                                           asp-action="Details"
+                                           asp-route-id="@batch.ProductId"
+                                           class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-decoration-none"
+                                           title="Xem chi tiết sản phẩm">
+                                            @(string.IsNullOrWhiteSpace(batch.Product?.Code) ? $"SP-{batch.ProductId:D4}" : batch.Product.Code)
+                                        </a>
+                                    </td>
+
+                                    <td>
+                                        <a asp-controller="Products"
+                                           asp-action="Details"
+                                           asp-route-id="@batch.ProductId"
+                                           class="fw-semibold text-dark text-decoration-none"
+                                           title="Xem chi tiết sản phẩm">
+                                            @(batch.Product?.Name ?? "Chưa có sản phẩm")
+                                        </a>
+                                    </td>
+
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @(batch.WarehouseBin?.Name ?? "Chưa có ô chứa")
+                                        </div>
+
+                                        <small class="text-muted d-block">
+                                            Kho:
+                                            @(batch.WarehouseBin?.WarehouseShelf?.WarehouseArea?.Warehouse?.Name ?? "Chưa có kho")
+                                        </small>
+
+                                        <small class="text-muted d-block">
+                                            Khu vực:
+                                            @(batch.WarehouseBin?.WarehouseShelf?.WarehouseArea?.Name ?? "Chưa có khu vực")
+                                        </small>
+
+                                        <small class="text-muted d-block">
+                                            Kệ:
+                                            @(batch.WarehouseBin?.WarehouseShelf?.Name ?? "Chưa có kệ")
+                                        </small>
+
+                                        <small class="text-muted d-block">
+                                            Ô chứa:
+                                            @(batch.WarehouseBin?.Code ?? "Chưa có ô chứa")
+                                        </small>
+                                    </td>
+
+                                    <td>
+                                        @(batch.ManufactureDate?.ToString("dd/MM/yyyy") ?? "—")
+                                    </td>
+
+                                    <td>
+                                        @if (batch.ExpiryDate.HasValue)
+                                        {
+                                            <div>@batch.ExpiryDate.Value.ToString("dd/MM/yyyy")</div>
+
+                                            @if (batch.ExpiryDate.Value.Date < DateTime.Today)
+                                            {
+                                                <span class="badge bg-danger">Đã hết hạn</span>
+                                            }
+                                            else if (batch.ExpiryDate.Value.Date <= DateTime.Today.AddDays(30))
+                                            {
+                                                <span class="badge bg-warning text-dark">Sắp hết hạn</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Còn hạn</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Không có</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary">
+                                            @batch.Quantity.ToString("N0")
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <a asp-action="History"
+                                               asp-route-id="@batch.Id"
+                                               class="btn btn-sm btn-outline-info"
+                                               title="Truy xuất nguồn gốc & vòng đời lô hàng">
+                                                <i class="bi bi-diagram-3"></i>
+                                            </a>
+
+                                            <a asp-controller="Scanner"
+                                               asp-action="Labels"
+                                               asp-route-batchIds="@batch.Id"
+                                               target="_blank"
+                                               class="btn btn-sm btn-outline-dark"
+                                               title="In tem QR / Barcode">
+                                                <i class="bi bi-qr-code"></i>
+                                            </a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@batch.Id"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Sửa lô hàng">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            <form asp-action="Delete"
+                                                  asp-route-id="@batch.Id"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc muốn xóa lô hàng này?')">
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Xóa lô hàng">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <h5 class="mt-3">Chưa có lô hàng nào</h5>
+                    <p class="text-muted">Hãy thêm lô hàng đầu tiên vào hệ thống.</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Thêm lô hàng
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const chkAll = document.getElementById('chkAll');
+            const checkboxes = document.querySelectorAll('.chk-batch');
+            const btnPrint = document.getElementById('btnPrintSelected');
+            const countSpan = document.getElementById('selectedCount');
+
+            function updateSelection() {
+                const selected = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+                if (countSpan) countSpan.textContent = selected.length;
+                if (btnPrint) btnPrint.disabled = selected.length === 0;
+            }
+
+            if (chkAll) {
+                chkAll.addEventListener('change', function () {
+                    checkboxes.forEach(c => c.checked = chkAll.checked);
+                    updateSelection();
+                });
+            }
+
+            checkboxes.forEach(c => c.addEventListener('change', updateSelection));
+
+            if (btnPrint) {
+                btnPrint.addEventListener('click', function () {
+                    const selected = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+                    if (selected.length > 0) {
+                        window.open('/Scanner/Labels?batchIds=' + selected.join(','), '_blank');
+                    }
+                });
+            }
+        })();
+    </script>
+}

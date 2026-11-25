@@ -1,0 +1,498 @@
+@model IEnumerable<QuanLyKho2221.Models.Product>
+
+@{
+    ViewData["Title"] = "Quản lý sản phẩm";
+    var products = Model?.ToList() ?? new List<QuanLyKho2221.Models.Product>();
+}
+
+<div class="container mt-4">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">Quản lý sản phẩm</h2>
+            <p class="text-muted mb-0">Theo dõi và quản lý hàng hóa trong kho</p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-plus-circle me-1"></i> Thêm sản phẩm
+        </a>
+    </div>
+
+    <!-- THÔNG BÁO -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- THỐNG KÊ -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 bg-primary bg-opacity-10 p-3">
+                        <i class="bi bi-box-seam text-primary fs-3"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-1">Số sản phẩm đang hiển thị</p>
+                        <h3 class="fw-bold mb-0">@products.Count</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 bg-success bg-opacity-10 p-3">
+                        <i class="bi bi-boxes text-success fs-3"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-1">Tổng số lượng tồn đang hiển thị</p>
+                        <h3 class="fw-bold mb-0">@products.Sum(p => p.Quantity)</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DANH SÁCH -->
+    <div class="card border-0">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-ul me-2"></i>Danh sách sản phẩm</span>
+            <span class="badge bg-primary">@products.Count sản phẩm</span>
+        </div>
+
+        <div class="card-body">
+            
+            <div class="row g-3 mb-4">
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-muted small">Tổng sản phẩm</div>
+                            <h3 class="fw-bold text-primary mb-0">
+                                @ViewBag.TotalProducts
+                            </h3>
+                            <i class="bi bi-box-seam text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-muted small">Còn hàng</div>
+                            <h3 class="fw-bold text-success mb-0">
+                                @ViewBag.AvailableProducts
+                            </h3>
+                            <i class="bi bi-check-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-muted small">Sắp hết hàng</div>
+                            <h3 class="fw-bold text-warning mb-0">
+                                @ViewBag.LowStockProducts
+                            </h3>
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-muted small">Hết hàng</div>
+                            <h3 class="fw-bold text-danger mb-0">
+                                @ViewBag.OutOfStockProducts
+                            </h3>
+                            <i class="bi bi-x-circle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            @if (ViewBag.LowStockList.Count > 0 || ViewBag.OutOfStockList.Count > 0)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-warning-subtle">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bell-fill text-warning me-2"></i>
+                            Cảnh báo tồn kho
+                        </h5>
+                    </div>
+
+                    <div class="card-body">
+                        @if (ViewBag.OutOfStockList.Count > 0)
+                        {
+                            <h6 class="text-danger">Sản phẩm đã hết hàng</h6>
+
+                            @foreach (var product in ViewBag.OutOfStockList)
+                            {
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span>@product.Code - @product.Name</span>
+                                    <span class="badge bg-danger">Hết hàng</span>
+                                </div>
+                            }
+                        }
+
+                        @if (ViewBag.LowStockList.Count > 0)
+                        {
+                            <h6 class="text-warning mt-3">Sản phẩm sắp hết hàng</h6>
+
+                            @foreach (var product in ViewBag.LowStockList)
+                            {
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span>@product.Code - @product.Name</span>
+                                    <span class="badge bg-warning text-dark">
+                                        Còn @product.Quantity
+                                    </span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
+
+            <!-- TÌM KIẾM VÀ LỌC -->
+            <form asp-controller="Products"
+                  asp-action="Index"
+                  method="get"
+                  class="row g-3 mb-4">
+
+                <!-- Tìm sản phẩm -->
+                <div class="col-md-4">
+                    <label class="form-label">Tìm sản phẩm</label>
+                    <input type="text"
+                           name="searchString"
+                           value="@ViewBag.SearchString"
+                           class="form-control"
+                           placeholder="Nhập tên hoặc mã sản phẩm..." />
+                </div>
+
+                <!-- Danh mục -->
+                <div class="col-md-4">
+                    <label class="form-label">Danh mục</label>
+                    <select name="categoryId"
+                            asp-items="ViewBag.Categories"
+                            class="form-select">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                </div>
+
+                <!-- Tình trạng tồn kho -->
+                <div class="col-md-4">
+                    <label class="form-label">Tình trạng tồn kho</label>
+                    <select name="stockStatus" class="form-select">
+                        <option value="">Tất cả tình trạng</option>
+                        <option value="available" selected="@(ViewBag.StockStatus == "available")">
+                            Còn hàng
+                        </option>
+                        <option value="low" selected="@(ViewBag.StockStatus == "low")">
+                            Sắp hết hàng
+                        </option>
+                        <option value="out" selected="@(ViewBag.StockStatus == "out")">
+                            Hết hàng
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Kho -->
+                <div class="col-md-5">
+                    <label class="form-label">
+                        <i class="bi bi-building me-1"></i>Kho hàng
+                    </label>
+                    <select name="warehouseId"
+                            asp-items="ViewBag.Warehouses"
+                            class="form-select"
+                            onchange="this.form.submit()">
+                        <option value="">Tất cả kho</option>
+                    </select>
+                </div>
+
+                <!-- Khu vực -->
+                <div class="col-md-5">
+                    <label class="form-label">
+                        <i class="bi bi-grid me-1"></i>Khu vực
+                    </label>
+                    <select name="areaId"
+                            asp-items="ViewBag.Areas"
+                            class="form-select"
+                            onchange="this.form.submit()">
+                        <option value="">Tất cả khu vực</option>
+                    </select>
+                </div>
+                <!-- Kệ -->
+                <div class="col-md-4">
+                    <label class="form-label">Kệ</label>
+                    <select name="shelfCode"
+                            asp-items="ViewBag.Shelves"
+                            class="form-select"
+                            onchange="this.form.submit()">
+                        <option value="">Tất cả kệ</option>
+                    </select>
+                </div>
+
+                <!-- Tầng -->
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="bi bi-layers-half me-1"></i>Tầng
+                    </label>
+                    <select name="floorNumber"
+                            asp-items="ViewBag.Floors"
+                            class="form-select"
+                            onchange="this.form.submit()">
+                        <option value="">Tất cả tầng</option>
+                    </select>
+                </div>
+
+                <!-- Ô chứa -->
+                <div class="col-md-4">
+                    <label class="form-label">Ô chứa</label>
+                    <select name="binCode"
+                            asp-items="ViewBag.Bins"
+                            class="form-select">
+                        <option value="">Tất cả ô chứa</option>
+                    </select>
+                </div>
+
+                <!-- Nút lọc -->
+                <div class="col-12 d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-funnel me-1"></i>Lọc
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary"
+                       title="Xóa bộ lọc">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Đặt lại
+                    </a>
+                </div>
+
+            </form>
+
+            <!-- BẢNG SẢN PHẨM -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Mã sản phẩm</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Số lượng</th>
+                            <th>Vị trí lưu trữ</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (products.Any())
+                        {
+                            @foreach (var item in products)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+
+                                    <td>
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-decoration-none"
+                                           title="Xem chi tiết sản phẩm">
+                                            @(string.IsNullOrWhiteSpace(item.Code) ? $"SP-{item.Id:D4}" : item.Code)
+                                        </a>
+                                    </td>
+
+                                    <td>
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="fw-bold text-dark text-decoration-none"
+                                           title="Xem chi tiết sản phẩm">
+                                            @item.Name
+                                        </a>
+                                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                                        {
+                                            <br />
+                                            <small class="text-muted">
+                                                @(item.Description.Length > 60
+                                                    ? item.Description.Substring(0, 60) + "..."
+                                                    : item.Description)
+                                            </small>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (item.Category != null)
+                                        {
+                                            <span class="badge bg-info text-dark">
+                                                @item.Category.Name
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa phân loại</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (item.Quantity <= 0)
+                                        {
+                                            <span class="badge bg-dark">Hết hàng</span>
+                                        }
+                                        else if (item.Quantity <= 5)
+                                        {
+                                            <span class="badge bg-danger">
+                                                @item.Quantity - Sắp hết
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">
+                                                @item.Quantity - Còn hàng
+                                            </span>
+                                        }
+                                    </td>
+                                    
+                                    
+                                    <td style="min-width: 300px;">
+                                        @if (item.Batches != null && item.Batches.Any())
+                                        {
+                                            @foreach (var batch in item.Batches.OrderBy(b => b.BatchCode))
+                                            {
+                                                <div class="border rounded-3 p-3 mb-2 bg-white shadow-sm">
+
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <span class="fw-bold text-primary">
+                                                            <i class="bi bi-upc-scan me-1"></i>
+                                                            @batch.BatchCode
+                                                        </span>
+
+                                                        <span class="badge bg-primary rounded-pill">
+                                                            SL: @batch.Quantity
+                                                        </span>
+                                                    </div>
+
+                                                    @if (batch.WarehouseBin?.WarehouseShelf?.WarehouseArea?.Warehouse != null)
+                                                    {
+                                                        var bin = batch.WarehouseBin;
+                                                        var shelf = bin.WarehouseShelf;
+                                                        var area = shelf.WarehouseArea;
+                                                        var warehouse = area.Warehouse;
+
+                                                        <div class="small mb-2">
+                                                            <i class="bi bi-building text-primary me-2"></i>
+                                                            <strong>@warehouse.Name</strong>
+                                                        </div>
+
+                                                        <div class="d-flex flex-wrap gap-2 mb-2">
+                                                            <span class="badge bg-info text-dark">
+                                                                <i class="bi bi-grid me-1"></i>
+                                                                @area.Code
+                                                            </span>
+
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-layers me-1"></i>
+                                                                @shelf.Code
+                                                            </span>
+
+                                                            <span class="badge bg-warning text-dark">
+                                                                Tầng @bin.FloorNumber
+                                                            </span>
+
+                                                            <span class="badge bg-danger">
+                                                                <i class="bi bi-geo-alt me-1"></i>
+                                                                @bin.Code
+                                                            </span>
+                                                        </div>
+
+                                                        <small class="text-muted">
+                                                            @area.Name
+                                                        </small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning text-dark">
+                                                            Chưa xác định đầy đủ vị trí
+                                                        </span>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Chưa có lô hàng
+                                            </span>
+                                        }
+                                    </td>
+
+
+
+                                    <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+
+                                    <td>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a asp-action="Details"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Xem chi tiết sản phẩm">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-warning"
+                                               title="Sửa sản phẩm">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-danger"
+                                               title="Xóa sản phẩm">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                                    <p class="text-muted mt-2 mb-0">
+                                        Không tìm thấy sản phẩm phù hợp.
+                                    </p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>

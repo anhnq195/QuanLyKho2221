@@ -1,0 +1,156 @@
+@{
+    ViewData["Title"] = "Nhập Excel hàng loạt & Sao lưu / Khôi phục";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1">
+            <i class="bi bi-database-fill-gear text-primary me-2"></i>
+            Công cụ Dữ liệu Kho: Import Excel Hàng loạt & Sao lưu / Khôi phục (Backup & Restore)
+        </h3>
+        <p class="text-muted small mb-0">
+            Hỗ trợ khởi tạo nhanh danh mục hàng hóa & số dư lô đầu kỳ từ Excel (T44, T56) và bảo vệ an toàn dữ liệu kho định kỳ (T57, T58).
+        </p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-x-octagon-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- THỐNG KÊ BẢN GHI HIỆN CÓ TRONG CSDL -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Sản phẩm (SKU)</div>
+                    <h3 class="fw-bold text-primary mb-0">@ViewBag.ProductCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Lô hàng (Batches)</div>
+                    <h3 class="fw-bold text-success mb-0">@ViewBag.BatchCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Phiếu Nhập / Xuất</div>
+                    <h3 class="fw-bold text-info mb-0">@(ViewBag.ImportCount + ViewBag.ExportCount)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Bản ghi Thẻ kho</div>
+                    <h3 class="fw-bold text-dark mb-0">@ViewBag.StockCardCount</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- CỘT 1: IMPORT EXCEL HÀNG LOẠT (T44, T56) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-file-earmark-spreadsheet-fill text-success me-1"></i>
+                    1. Nhập Danh mục Hàng hóa & Lô tồn đầu kỳ từ Excel (T44 / T56)
+                </div>
+                <div class="card-body p-4">
+                    <p class="small text-muted">
+                        Tải file Excel mẫu chuẩn của hệ thống (đã đính kèm danh sách Mã ô chứa ở Sheet 2), điền thông tin các lô hàng và tải lên để nhập kho hàng loạt. Hệ thống tự động tạo Danh mục, Sản phẩm, Lô hàng và ghi Sổ Thẻ kho.
+                    </p>
+
+                    <div class="mb-4">
+                        <a asp-action="DownloadTemplate" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download me-1"></i>
+                            Tải file Excel mẫu chuẩn (Mau_NhapHangLoat_WMS.xlsx)
+                        </a>
+                    </div>
+
+                    <form asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Chọn file Excel (.xlsx) cần nhập kho</label>
+                            <input type="file" name="excelFile" accept=".xlsx" class="form-control" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-cloud-arrow-up me-1"></i>
+                            Thực hiện Import vào Kho
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT 2: BACKUP & RESTORE DỮ LIỆU KHO (T57, T58) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-shield-check text-primary me-1"></i>
+                    2. Sao lưu (Backup) & Khôi phục (Restore) Dữ liệu Kho (T57 / T58)
+                </div>
+                <div class="card-body p-4">
+                    <h6 class="fw-bold">A. Tạo bản sao lưu (Backup Snapshot)</h6>
+                    <p class="small text-muted">
+                        Kết xuất toàn bộ cấu trúc kho, danh mục, nhà cung cấp, hàng hóa và lô tồn kho ra gói JSON có chữ ký băm toàn vẹn <code>SHA-256</code>.
+                    </p>
+
+                    <form asp-action="ExportBackup" method="post" class="mb-4">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-hdd-network me-1"></i>
+                            Tải gói Sao lưu Dữ liệu Kho (.json)
+                        </button>
+                    </form>
+
+                    <hr />
+
+                    <h6 class="fw-bold">B. Khôi phục dữ liệu từ bản sao lưu (Restore)</h6>
+                    <p class="small text-muted">
+                        Phục hồi an toàn các danh mục, nhà cung cấp và mã hàng hóa từ gói sao lưu mà không làm mất dữ liệu phát sinh hiện có.
+                    </p>
+
+                    <form asp-action="RestoreBackup" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="input-group">
+                            <input type="file" name="backupFile" accept=".json" class="form-control" required />
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Khôi phục
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

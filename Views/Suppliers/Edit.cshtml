@@ -1,0 +1,155 @@
+@model QuanLyKho2221.Models.Supplier
+@{
+    ViewData["Title"] = "Cập nhật nhà cung cấp";
+    var allProducts = ViewBag.AllProducts as List<QuanLyKho2221.Models.Product> ?? new();
+    var selectedIds = ViewBag.SelectedProductIds as HashSet<int> ?? new HashSet<int>();
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-pencil-square text-primary me-2"></i>Cập nhật nhà cung cấp &amp; Sản phẩm cung ứng
+            </h2>
+            <p class="text-muted mb-0">Chỉnh sửa thông tin đối tác và danh sách mặt hàng được phép nhập từ nhà cung cấp này.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-4">
+                    <!-- CỘT TRÁI: THÔNG TIN NHÀ CUNG CẤP -->
+                    <div class="col-lg-6">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="bi bi-building me-1"></i>1. Thông tin liên hệ đối tác
+                        </h5>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Tên nhà cung cấp <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label">Số điện thoại</label>
+                                <input asp-for="Phone" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label">Địa chỉ</label>
+                            <input asp-for="Address" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Ghi chú / Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: SẢN PHẨM ĐƯỢC PHÉP CUNG CẤP -->
+                    <div class="col-lg-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold text-primary mb-0">
+                                <i class="bi bi-box-seam me-1"></i>2. Sản phẩm được phép cung cấp
+                            </h5>
+                            <span class="badge bg-primary" id="selectedProdBadge">0 đã chọn</span>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            Chỉ những sản phẩm được tích chọn dưới đây mới có thể chọn khi lập phiếu nhập kho từ nhà cung cấp <strong>@Model.Name</strong>.
+                        </p>
+
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="prodFilterInput" class="form-control" placeholder="Tìm nhanh theo mã SKU hoặc tên sản phẩm..." />
+                            <button type="button" class="btn btn-outline-primary" id="btnCheckAllProd">Chọn / Bỏ tất cả</button>
+                        </div>
+
+                        <div class="border rounded-3 p-2 bg-light" style="max-height: 310px; overflow-y: auto;">
+                            @if (!allProducts.Any())
+                            {
+                                <div class="text-center text-muted py-4 small">Chưa có sản phẩm nào trong hệ thống.</div>
+                            }
+                            else
+                            {
+                                foreach (var p in allProducts)
+                                {
+                                    bool isChecked = selectedIds.Contains(p.Id);
+                                    <label class="d-flex align-items-center gap-2 p-2 rounded bg-white border mb-1 prod-check-item"
+                                           style="cursor: pointer;"
+                                           data-search="@($"{p.Code} {p.Name} {p.Category?.Name}".ToLowerInvariant())">
+                                        <input type="checkbox"
+                                               name="productIds"
+                                               value="@p.Id"
+                                               class="form-check-input mt-0 prod-checkbox"
+                                               checked="@isChecked" />
+                                        <span class="badge bg-secondary font-monospace">@(p.Code ?? $"SP-{p.Id:D4}")</span>
+                                        <span class="fw-semibold flex-grow-1 small">@p.Name</span>
+                                        <span class="text-muted" style="font-size:11px;">@(p.Category?.Name ?? "")</span>
+                                    </label>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                    <button class="btn btn-primary px-4" type="submit">
+                        <i class="bi bi-save me-1"></i>Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const filterInput = document.getElementById("prodFilterInput");
+            const items = document.querySelectorAll(".prod-check-item");
+            const checkboxes = document.querySelectorAll(".prod-checkbox");
+            const badge = document.getElementById("selectedProdBadge");
+            const btnAll = document.getElementById("btnCheckAllProd");
+
+            function updateCount() {
+                const c = Array.from(checkboxes).filter(x => x.checked).length;
+                if (badge) badge.textContent = c + " đã chọn";
+            }
+
+            checkboxes.forEach(cb => cb.addEventListener("change", updateCount));
+
+            filterInput?.addEventListener("input", function () {
+                const kw = this.value.toLowerCase().trim();
+                items.forEach(el => {
+                    el.style.display = (!kw || el.dataset.search.includes(kw)) ? "" : "none";
+                });
+            });
+
+            btnAll?.addEventListener("click", function () {
+                const anyUnchecked = Array.from(checkboxes).some(x => !x.checked);
+                checkboxes.forEach(x => x.checked = anyUnchecked);
+                updateCount();
+            });
+
+            updateCount();
+        })();
+    </script>
+}

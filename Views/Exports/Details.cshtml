@@ -1,0 +1,454 @@
+@model QuanLyKho2221.Models.ExportReceipt
+
+@{
+    ViewData["Title"] = "Chi tiết phiếu xuất kho";
+
+    bool isAdmin = User.IsInRole("Admin");
+    bool isOwner = Model.CreatedBy == User.Identity?.Name;
+    bool isPending = Model.Status == ReceiptStatus.Pending;
+
+    string StatusText(string status)
+    {
+        return status switch
+        {
+            ReceiptStatus.Pending => "Chờ duyệt",
+            ReceiptStatus.Approved => "Đã duyệt",
+            ReceiptStatus.Rejected => "Đã từ chối",
+            ReceiptStatus.Cancelled => "Đã hủy",
+            _ => status
+        };
+    }
+
+    string StatusClass(string status)
+    {
+        return status switch
+        {
+            ReceiptStatus.Pending => "bg-warning text-dark",
+            ReceiptStatus.Approved => "bg-success",
+            ReceiptStatus.Rejected => "bg-danger",
+            ReceiptStatus.Cancelled => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    var bin = Model.ProductBatch?.WarehouseBin;
+    var shelf = bin?.WarehouseShelf;
+    var area = shelf?.WarehouseArea;
+    var warehouse = area?.Warehouse;
+}
+
+<div class="container mt-4 mb-4">
+
+    <!-- THÔNG BÁO -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                Chi tiết phiếu xuất
+            </h2>
+
+            <p class="text-muted mb-0">
+                Mã phiếu:
+                <strong class="text-primary">@Model.ReceiptCode</strong>
+            </p>
+        </div>
+
+        <span class="badge fs-6 px-3 py-2 @StatusClass(Model.Status)">
+            @StatusText(Model.Status)
+        </span>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-8">
+
+            <!-- THÔNG TIN PHIẾU -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-info-circle text-primary me-2"></i>
+                    Thông tin phiếu xuất
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row g-4">
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Mã phiếu</div>
+                            <div class="fw-bold text-primary">
+                                @Model.ReceiptCode
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Ngày tạo</div>
+                            <div class="fw-semibold">
+                                @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Người tạo</div>
+                            <div class="fw-semibold">
+                                @(Model.CreatedBy ?? "Không xác định")
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Trạng thái</div>
+                            <span class="badge @StatusClass(Model.Status)">
+                                @StatusText(Model.Status)
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- THÔNG TIN HÀNG HÓA -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-box-seam text-primary me-2"></i>
+                    Thông tin hàng hóa
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row g-4">
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Sản phẩm</div>
+                            <div class="fw-semibold">
+                                @(Model.Product?.Name ?? "Không xác định")
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Mã lô hàng</div>
+                            <div class="fw-semibold">
+                                @(Model.ProductBatch?.BatchCode ?? "Không xác định")
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Số lượng xuất</div>
+                            <div class="fw-bold text-primary fs-4">
+                                @Model.Quantity
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small mb-1">Người nhận</div>
+                            <div class="fw-semibold">
+                                @(string.IsNullOrWhiteSpace(Model.Receiver)
+                                    ? "Chưa có"
+                                    : Model.Receiver)
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="text-muted small mb-2">
+                                Vị trí lưu kho của lô hàng
+                            </div>
+
+                            @if (bin != null)
+                            {
+                                <div class="border rounded p-3 bg-light">
+                                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                                    <span class="fw-semibold">
+                                        @($"{warehouse?.Name ?? "Kho"} / {area?.Name ?? "Khu vực"} / {shelf?.Name ?? "Kệ"} / {bin.Name}")
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Không xác định</span>
+                            }
+                        </div>
+
+                        <div class="col-12">
+                            <div class="text-muted small mb-1">Ghi chú</div>
+                            <div class="fw-semibold">
+                                @(string.IsNullOrWhiteSpace(Model.Note)
+                                    ? "Không có ghi chú"
+                                    : Model.Note)
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- THÔNG TIN DUYỆT -->
+            @if (Model.Status == ReceiptStatus.Approved)
+            {
+                <div class="card mb-4">
+                    <div class="card-header text-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Thông tin duyệt phiếu
+                    </div>
+
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="text-muted small mb-1">Người duyệt</div>
+                                <div class="fw-semibold">
+                                    @(Model.ApprovedBy ?? "Không xác định")
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="text-muted small mb-1">Thời gian duyệt</div>
+                                <div class="fw-semibold">
+                                    @(Model.ApprovedAt?.ToString("dd/MM/yyyy HH:mm")
+                                        ?? "Không xác định")
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- THÔNG TIN TỪ CHỐI -->
+            @if (Model.Status == ReceiptStatus.Rejected)
+            {
+                <div class="card mb-4">
+                    <div class="card-header text-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Thông tin từ chối
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <p class="mb-2">
+                            <strong>Người từ chối:</strong>
+                            @(Model.RejectedBy ?? "Không xác định")
+                        </p>
+
+                        <p class="mb-3">
+                            <strong>Thời gian:</strong>
+                            @(Model.RejectedAt?.ToString("dd/MM/yyyy HH:mm")
+                                ?? "Không xác định")
+                        </p>
+
+                        <div class="alert alert-danger mb-0">
+                            <strong>Lý do từ chối:</strong>
+                            <div class="mt-1">
+                                @(Model.RejectionReason ?? "Không có lý do")
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+            <!-- THÔNG TIN HỦY -->
+            @if (Model.Status == ReceiptStatus.Cancelled)
+            {
+                <div class="card mb-4">
+                    <div class="card-header text-secondary">
+                        <i class="bi bi-x-octagon me-2"></i>
+                        Thông tin hủy phiếu
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <p class="mb-2">
+                            <strong>Người hủy:</strong>
+                            @(Model.CancelledBy ?? "Không xác định")
+                        </p>
+
+                        <p class="mb-0">
+                            <strong>Thời gian hủy:</strong>
+                            @(Model.CancelledAt?.ToString("dd/MM/yyyy HH:mm")
+                                ?? "Không xác định")
+                        </p>
+
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <!-- CỘT PHẢI -->
+        <div class="col-lg-4">
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-clipboard-check text-primary me-2"></i>
+                    Trạng thái xử lý
+                </div>
+
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">Trạng thái hiện tại</div>
+                        <span class="badge fs-6 @StatusClass(Model.Status)">
+                            @StatusText(Model.Status)
+                        </span>
+                    </div>
+
+                    @if (isPending)
+                    {
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Phiếu đang chờ quản lý xử lý.
+                        </div>
+                    }
+                    else if (Model.Status == ReceiptStatus.Approved)
+                    {
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Phiếu đã được duyệt. Tồn kho đã được cập nhật.
+                        </div>
+                    }
+                    else if (Model.Status == ReceiptStatus.Rejected)
+                    {
+                        <div class="alert alert-danger mb-0">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Phiếu đã bị từ chối. Tồn kho không bị thay đổi.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Phiếu đã được hủy. Tồn kho không bị thay đổi.
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <!-- ADMIN DUYỆT / TỪ CHỐI -->
+            @if (isPending && isAdmin)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-gear text-primary me-2"></i>
+                        Quản lý xử lý phiếu
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <form asp-action="Approve"
+                              method="post"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn duyệt phiếu xuất này?');">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="id" value="@Model.Id" />
+
+                            <button type="submit" class="btn btn-success w-100 mb-3">
+                                <i class="bi bi-check-lg me-1"></i>
+                                Duyệt phiếu xuất
+                            </button>
+                        </form>
+
+                        <button type="button"
+                                class="btn btn-outline-danger w-100"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#rejectForm">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Từ chối phiếu
+                        </button>
+
+                        <div class="collapse mt-3" id="rejectForm">
+                            <div class="border rounded p-3">
+
+                                <form asp-action="Reject" method="post">
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden" name="id" value="@Model.Id" />
+
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Lý do từ chối
+                                        </label>
+
+                                        <textarea name="reason"
+                                                  class="form-control"
+                                                  rows="4"
+                                                  maxlength="500"
+                                                  required
+                                                  placeholder="Nhập lý do từ chối..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Xác nhận từ chối
+                                    </button>
+                                </form>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+            <!-- HỦY PHIẾU -->
+            @if (isPending && (isAdmin || isOwner))
+            {
+                <div class="card mb-4">
+                    <div class="card-header text-danger">
+                        <i class="bi bi-trash me-2"></i>
+                        Hủy phiếu xuất
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <p class="text-muted small">
+                            Bạn chỉ có thể hủy phiếu khi phiếu chưa được quản lý duyệt.
+                        </p>
+
+                        <form asp-action="Cancel"
+                              method="post"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn hủy phiếu này?');">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="id" value="@Model.Id" />
+
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-1"></i>
+                                Hủy phiếu xuất
+                            </button>
+
+                        </form>
+
+                    </div>
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <div class="mt-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại danh sách
+        </a>
+    </div>
+
+</div>

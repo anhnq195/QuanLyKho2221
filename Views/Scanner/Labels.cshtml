@@ -1,0 +1,202 @@
+@model List<QuanLyKho2221.Controllers.LabelViewModel>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>In tem mã vạch - QuanLyKho2221</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            background: #f1f5f9;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #172554;
+            color: white;
+            padding: 12px 20px;
+        }
+
+        .sheet {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 70mm);
+            gap: 4mm;
+            padding: 8mm;
+            justify-content: center;
+        }
+
+        .label {
+            width: 70mm;
+            height: 42mm;
+            background: white;
+            border: 1px dashed #94a3b8;
+            border-radius: 2mm;
+            padding: 2.5mm;
+            display: flex;
+            gap: 2.5mm;
+            overflow: hidden;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .label .qr {
+            width: 22mm;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .label .qr canvas, .label .qr img {
+            width: 22mm !important;
+            height: 22mm !important;
+        }
+
+        .label .qr .payload {
+            font-family: Consolas, monospace;
+            font-size: 6.5pt;
+            margin-top: 1mm;
+            font-weight: 700;
+        }
+
+        .label .info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            font-size: 7pt;
+            line-height: 1.25;
+        }
+
+        .label .title {
+            font-weight: 700;
+            font-size: 8.5pt;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .label .subtitle {
+            font-weight: 600;
+            color: #1d4ed8;
+            margin-bottom: .5mm;
+        }
+
+        .label .line3 {
+            color: #475569;
+            font-size: 6.2pt;
+        }
+
+        .label svg.barcode {
+            margin-top: auto;
+            width: 100%;
+            height: 11mm;
+        }
+
+        @@media print {
+            @@page {
+                size: A4;
+                margin: 6mm;
+            }
+
+            body {
+                background: white;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .sheet {
+                padding: 0;
+                justify-content: start;
+            }
+
+            .label {
+                border: 1px solid #cbd5e1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <i class="bi bi-qr-code me-2"></i>
+            <strong>In tem mã vạch / QR</strong>
+            <span class="ms-2 opacity-75 small">@Model.Count tem — khổ 70 × 42 mm, in trên giấy A4 hoặc decal</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-warning btn-sm fw-semibold" @(Model.Count == 0 ? "disabled" : "")>
+                <i class="bi bi-printer me-1"></i> In tem
+            </button>
+            <button onclick="history.back()" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </button>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="container py-5 text-center text-muted">
+            <i class="bi bi-inbox display-4"></i>
+            <p class="mt-3">Không có tem nào để in. Hãy chọn lô hàng hoặc kệ cần in tem.</p>
+        </div>
+    }
+    else
+    {
+        <div class="sheet">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                var l = Model[i];
+                <div class="label">
+                    <div class="qr">
+                        <div class="qr-box" data-payload="@l.Payload"></div>
+                        <div class="payload">@l.Payload</div>
+                    </div>
+                    <div class="info">
+                        <div class="title" title="@l.Title">@l.Title</div>
+                        <div class="subtitle">@l.SubTitle</div>
+                        <div>@l.Line1</div>
+                        <div>@l.Line2</div>
+                        <div class="line3">@l.Line3</div>
+                        <svg class="barcode" data-payload="@l.Payload"></svg>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <script>
+        document.querySelectorAll('.qr-box').forEach(el => {
+            new QRCode(el, {
+                text: el.dataset.payload,
+                width: 128,
+                height: 128,
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        });
+
+        document.querySelectorAll('svg.barcode').forEach(el => {
+            JsBarcode(el, el.dataset.payload, {
+                format: 'CODE128',
+                displayValue: false,
+                margin: 0,
+                height: 40,
+                width: 1.4
+            });
+        });
+    </script>
+</body>
+</html>
+

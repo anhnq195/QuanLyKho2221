@@ -1,0 +1,679 @@
+@using QuanLyKho2221.Models
+
+@{
+    ViewData["Title"] = "Tổng quan kho hàng";
+
+    var topProducts = ViewBag.TopLowStockProducts as IEnumerable<Product>
+        ?? Enumerable.Empty<Product>();
+
+    var lowStockProducts = ViewBag.LowStockProducts as IEnumerable<Product>
+        ?? Enumerable.Empty<Product>();
+
+    var outOfStockProducts = ViewBag.OutOfStockProducts as IEnumerable<Product>
+        ?? Enumerable.Empty<Product>();
+
+    var recentImports = ViewBag.RecentImports as IEnumerable<ImportReceipt>
+        ?? Enumerable.Empty<ImportReceipt>();
+
+    var recentExports = ViewBag.RecentExports as IEnumerable<ExportReceipt>
+        ?? Enumerable.Empty<ExportReceipt>();
+}
+
+<style>
+    .dashboard-page .card {
+        border-radius: 14px;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition: all .2s ease;
+    }
+
+        .dashboard-page .card:hover {
+            box-shadow: 0 10px 24px -4px rgba(15, 23, 42, .08) !important;
+        }
+
+    .dashboard-page .kpi-stat-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+        .dashboard-page .kpi-stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--kpi-color, #2563eb);
+        }
+
+    .dashboard-page h2 {
+        font-size: 25px;
+    }
+
+    .dashboard-page h5 {
+        font-size: 16px;
+    }
+
+    .dashboard-page .card-body {
+        padding: 20px;
+    }
+
+    .dashboard-page .table {
+        font-size: 13px;
+    }
+
+        .dashboard-page .table th,
+        .dashboard-page .table td {
+            padding: 11px 13px;
+        }
+
+    .dashboard-page .badge {
+        font-size: 11px;
+        padding: 6px 9px;
+    }
+
+    .dashboard-page .btn {
+        font-size: 12px;
+        padding: 7px 12px;
+    }
+
+    .dashboard-page .text-muted {
+        color: #64748b !important;
+    }
+</style>
+
+<div class="container-fluid mt-3 pb-4 dashboard-page">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-speedometer2 text-primary me-1"></i>
+                Tổng quan kho hàng
+            </h2>
+
+            <p class="text-muted mb-0">
+                Theo dõi hoạt động nhập - xuất, sức chứa và tình trạng tồn kho thời gian thực.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Scanner"
+               asp-action="Index"
+               class="btn btn-outline-primary">
+                <i class="bi bi-qr-code-scan me-1"></i>
+                Quét mã kho
+            </a>
+
+            <a asp-controller="Products"
+               asp-action="StockAlerts"
+               class="btn btn-warning text-dark fw-semibold">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Cảnh báo kho
+            </a>
+
+            <a asp-controller="Products"
+               asp-action="Create"
+               class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>
+                Thêm sản phẩm
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 THẺ KPI THỐNG KÊ TỔNG QUAN -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="--kpi-color: #2563eb;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted fw-semibold mb-1">Tổng sản phẩm (SKU)</p>
+                            <h2 class="fw-bold text-primary mb-1">
+                                @ViewBag.TotalProducts
+                            </h2>
+                            <small class="text-muted">Mặt hàng đang quản lý</small>
+                        </div>
+
+                        <div class="rounded-3 bg-primary-subtle p-3">
+                            <i class="bi bi-box-seam fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="--kpi-color: #16a34a;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted fw-semibold mb-1">Danh mục</p>
+                            <h2 class="fw-bold text-success mb-1">
+                                @ViewBag.TotalCategories
+                            </h2>
+                            <small class="text-muted">Nhóm phân loại hàng</small>
+                        </div>
+
+                        <div class="rounded-3 bg-success-subtle p-3">
+                            <i class="bi bi-grid-1x2-fill fs-2 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="--kpi-color: #0891b2;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted fw-semibold mb-1">Nhà cung cấp</p>
+                            <h2 class="fw-bold text-info mb-1">
+                                @ViewBag.TotalSuppliers
+                            </h2>
+                            <small class="text-muted">Đối tác cung ứng</small>
+                        </div>
+
+                        <div class="rounded-3 bg-info-subtle p-3">
+                            <i class="bi bi-truck fs-2 text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-stat-card" style="--kpi-color: #f59e0b;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted fw-semibold mb-1">Tổng số lượng tồn</p>
+                            <h2 class="fw-bold text-warning mb-1">
+                                @(((int)(ViewBag.TotalQuantity ?? 0)).ToString("N0"))
+                            </h2>
+                            <small class="text-muted">Đơn vị hàng lưu kho</small>
+                        </div>
+
+                        <div class="rounded-3 bg-warning-subtle p-3">
+                            <i class="bi bi-boxes fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CẢNH BÁO TỒN KHO -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted fw-semibold mb-1">Sản phẩm sắp hết hàng</p>
+                            <h2 class="fw-bold text-warning mb-0">
+                                @ViewBag.LowStockCount
+                            </h2>
+                            <small class="text-muted">Chạm ngưỡng định mức từ 1 đến 5 sản phẩm</small>
+                        </div>
+
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm border-start border-danger border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted fw-semibold mb-1">Sản phẩm đã hết hàng</p>
+                            <h2 class="fw-bold text-danger mb-0">
+                                @ViewBag.OutOfStockCount
+                            </h2>
+                            <small class="text-muted">Số lượng tồn bằng 0 — Cần đặt hàng bổ sung</small>
+                        </div>
+
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                            <i class="bi bi-x-octagon-fill fs-2 text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BIỂU ĐỒ NHẬP XUẤT 6 THÁNG -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-bar-chart-line-fill text-primary me-1"></i>
+                        Biểu đồ lưu lượng Nhập - Xuất kho (6 tháng gần nhất)
+                    </h5>
+                    <p class="text-muted mb-0">
+                        Đối chiếu tổng sản lượng hàng nhập vào và xuất ra theo từng tháng.
+                    </p>
+                </div>
+
+                <a asp-controller="Analytics" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-graph-up-arrow me-1"></i> Phân tích vòng quay chi tiết
+                </a>
+            </div>
+
+            <div style="height:340px; position:relative;">
+                <canvas id="warehouseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP 5 SẢN PHẨM TỒN THẤP -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-sort-Numeric-down text-warning me-1"></i>
+                        Top 5 sản phẩm tồn kho thấp nhất
+                    </h5>
+                    <p class="text-muted mb-0">
+                        Các mặt hàng ưu tiên cần lập kế hoạch nhập thêm.
+                    </p>
+                </div>
+
+                <a asp-controller="Products"
+                   asp-action="StockAlerts"
+                   class="btn btn-outline-warning text-dark btn-sm">
+                    Xem trung tâm cảnh báo <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 70px;">STT</th>
+                            <th style="width: 150px;">Mã SKU</th>
+                            <th>Tên sản phẩm</th>
+                            <th class="text-center" style="width: 140px;">Số lượng tồn</th>
+                            <th style="width: 150px;">Tình trạng</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!topProducts.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-success p-4">
+                                    <i class="bi bi-check-circle-fill fs-3"></i>
+                                    <p class="mb-0 mt-2 fw-semibold">Không có sản phẩm tồn kho thấp.</p>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int topIndex = 1;
+
+                            @foreach (var item in topProducts)
+                            {
+                                <tr>
+                                    <td class="text-muted fw-semibold">#@topIndex</td>
+                                    <td>
+                                        <a asp-controller="Products"
+                                           asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-decoration-none">
+                                            @(string.IsNullOrWhiteSpace(item.Code) ? $"SP-{item.Id:D4}" : item.Code)
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Products"
+                                           asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="fw-semibold text-dark text-decoration-none">
+                                            @item.Name
+                                        </a>
+                                    </td>
+
+                                    <td class="text-center fw-bold @(item.Quantity <= 0 ? "text-danger" : "text-warning")">
+                                        @item.Quantity
+                                    </td>
+
+                                    <td>
+                                        @if (item.Quantity <= 0)
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                <i class="bi bi-x-circle me-1"></i>Hết hàng
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
+                                                <i class="bi bi-exclamation-circle me-1"></i>Sắp hết hàng
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+
+                                topIndex++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2 CỘT DANH SÁCH CẢNH BÁO -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold text-warning mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Sản phẩm sắp hết hàng (1–5)
+                    </h5>
+
+                    @if (lowStockProducts.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th>Mã SKU</th>
+                                        <th class="text-center">Tồn kho</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var item in lowStockProducts)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@item.Name</td>
+                                            <td><span class="badge bg-light text-secondary border font-monospace">@(item.Code ?? "-")</span></td>
+                                            <td class="text-center">
+                                                <span class="badge bg-warning text-dark">
+                                                    @item.Quantity
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-success py-4">
+                            <i class="bi bi-check-circle-fill fs-2"></i>
+                            <p class="mb-0 mt-2 fw-medium">Không có sản phẩm sắp hết hàng.</p>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold text-danger mb-3">
+                        <i class="bi bi-x-circle-fill me-1"></i>
+                        Sản phẩm đã hết hàng (0)
+                    </h5>
+
+                    @if (outOfStockProducts.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var item in outOfStockProducts)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                                    <span class="fw-semibold">
+                                        <i class="bi bi-box text-muted me-2"></i>@item.Name
+                                    </span>
+                                    <span class="badge bg-danger">Hết hàng</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="text-center text-success py-4">
+                            <i class="bi bi-check-circle-fill fs-2"></i>
+                            <p class="mb-0 mt-2 fw-medium">Không có sản phẩm hết hàng.</p>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PHIẾU NHẬP GẦN ĐÂY -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-box-arrow-in-down text-success me-2"></i>Phiếu nhập gần đây
+                </h5>
+
+                <a asp-controller="Imports"
+                   asp-action="Index"
+                   class="btn btn-sm btn-light text-primary fw-semibold">
+                    Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 140px;">Mã phiếu</th>
+                            <th>Sản phẩm</th>
+                            <th>Nhà cung cấp</th>
+                            <th class="text-center" style="width: 130px;">Số lượng</th>
+                            <th style="width: 150px;">Ngày nhập</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!recentImports.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    Chưa có phiếu nhập được duyệt.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in recentImports)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-controller="Imports"
+                                           asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none font-monospace">
+                                            @item.ReceiptCode
+                                        </a>
+                                    </td>
+                                    <td class="fw-semibold">@item.Product?.Name</td>
+                                    <td class="text-muted">
+                                        <i class="bi bi-building me-1"></i>@item.Supplier?.Name
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-subtle text-success fw-bold">
+                                            +@item.Quantity
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@item.CreatedAt.ToString("dd/MM/yyyy")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PHIẾU XUẤT GẦN ĐÂY -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-box-arrow-up text-danger me-2"></i>Phiếu xuất gần đây
+                </h5>
+
+                <a asp-controller="Exports"
+                   asp-action="Index"
+                   class="btn btn-sm btn-light text-primary fw-semibold">
+                    Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 140px;">Mã phiếu</th>
+                            <th>Sản phẩm</th>
+                            <th>Người nhận</th>
+                            <th class="text-center" style="width: 130px;">Số lượng</th>
+                            <th style="width: 150px;">Ngày xuất</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!recentExports.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    Chưa có phiếu xuất được duyệt.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in recentExports)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-controller="Exports"
+                                           asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="badge bg-danger-subtle text-danger border border-danger-subtle text-decoration-none font-monospace">
+                                            @item.ReceiptCode
+                                        </a>
+                                    </td>
+                                    <td class="fw-semibold">@item.Product?.Name</td>
+                                    <td class="text-muted">
+                                        <i class="bi bi-person-check me-1"></i>@(item.Receiver ?? "—")
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger-subtle text-danger fw-bold">
+                                            -@item.Quantity
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@item.CreatedAt.ToString("dd/MM/yyyy")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const monthLabels = @Html.Raw(ViewBag.MonthLabels ?? "[]");
+        const importData = @Html.Raw(ViewBag.ImportChartData ?? "[]");
+        const exportData = @Html.Raw(ViewBag.ExportChartData ?? "[]");
+
+        const chartElement = document.getElementById("warehouseChart");
+
+        if (chartElement && typeof Chart !== "undefined") {
+            new Chart(chartElement, {
+                type: "bar",
+                data: {
+                    labels: monthLabels,
+                    datasets: [
+                        {
+                            label: "Nhập kho",
+                            data: importData,
+                            backgroundColor: "rgba(16, 185, 129, 0.82)",
+                            borderColor: "#059669",
+                            borderWidth: 1,
+                            borderRadius: 8
+                        },
+                        {
+                            label: "Xuất kho",
+                            data: exportData,
+                            backgroundColor: "rgba(239, 68, 68, 0.82)",
+                            borderColor: "#dc2626",
+                            borderWidth: 1,
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "top"
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "#f1f5f9"
+                            },
+                            title: {
+                                display: true,
+                                text: "Số lượng sản phẩm"
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: "Tháng"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+}

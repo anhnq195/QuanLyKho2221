@@ -1,0 +1,227 @@
+@model QuanLyKho2221.Controllers.GlobalSearchResultViewModel
+@{
+    ViewData["Title"] = "Tìm kiếm toàn kho";
+}
+
+<div class="container-fluid py-3">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-2">
+                <i class="bi bi-search text-primary me-2"></i>Tìm kiếm nhanh toàn hệ thống (Global Search)
+            </h4>
+            <p class="text-muted small mb-3">
+                Tra cứu đồng thời Sản phẩm (SKU), Lô hàng, Phiếu nhập, Phiếu xuất và Vị trí kệ/ô chứa trong một ô duy nhất.
+            </p>
+            <form method="get" asp-action="Index" class="input-group input-group-lg">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+                <input type="text" name="q" value="@Model.Query" class="form-control"
+                       placeholder="Nhập mã phiếu (PN..., PX...), mã lô (LOT-...), mã SKU (SP-...), tên hàng hoặc mã ô..." autofocus />
+                <button class="btn btn-primary px-4" type="submit">Tìm kiếm</button>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Query))
+    {
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                Kết quả cho từ khóa <strong>"@Model.Query"</strong>:
+                <span class="badge bg-primary ms-1">@Model.TotalCount kết quả</span>
+            </div>
+        </div>
+
+        @if (Model.TotalCount == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-4"></i>
+                    <p class="mt-2 mb-0">Không tìm thấy dữ liệu nào khớp với từ khóa "@Model.Query".</p>
+                </div>
+            </div>
+        }
+
+        <!-- 1. SẢN PHẨM -->
+        @if (Model.Products.Any())
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-box-seam text-primary me-1"></i> Sản phẩm / Mã SKU (@Model.Products.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã SKU</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th class="text-center">Tồn kho</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Products)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary font-monospace">@(p.Code ?? "N/A")</span></td>
+                                    <td class="fw-semibold">@p.Name</td>
+                                    <td>@(p.Category?.Name ?? "Chưa phân nhóm")</td>
+                                    <td class="text-center">
+                                        <span class="badge @(p.Quantity > 5 ? "bg-success" : (p.Quantity > 0 ? "bg-warning text-dark" : "bg-danger"))">
+                                            @p.Quantity
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-controller="StockCards" asp-action="Index" asp-route-productId="@p.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-journal-text me-1"></i>Thẻ kho
+                                        </a>
+                                        <a asp-controller="Products" asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">
+                                            Sửa
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- 2. LÔ HÀNG -->
+        @if (Model.Batches.Any())
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-boxes text-success me-1"></i> Lô hàng (@Model.Batches.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã lô</th>
+                                <th>Sản phẩm</th>
+                                <th>Vị trí lưu kho</th>
+                                <th>Hạn sử dụng</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var b in Model.Batches)
+                            {
+                                <tr>
+                                    <td class="font-monospace fw-semibold text-primary">@b.BatchCode</td>
+                                    <td>@b.Product?.Name</td>
+                                    <td class="small text-muted">
+                                        @b.WarehouseBin?.WarehouseShelf?.WarehouseArea?.Warehouse?.Name ›
+                                        @b.WarehouseBin?.WarehouseShelf?.Name › Ô @b.WarehouseBin?.Code
+                                    </td>
+                                    <td>@(b.ExpiryDate?.ToString("dd/MM/yyyy") ?? "Không có")</td>
+                                    <td class="text-center fw-bold">@b.Quantity</td>
+                                    <td class="text-end">
+                                        <a asp-controller="Scanner" asp-action="Labels" asp-route-batchIds="@b.Id" target="_blank" class="btn btn-sm btn-outline-dark">
+                                            <i class="bi bi-qr-code me-1"></i>In tem
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- 3. PHIẾU NHẬP & XUẤT -->
+        <div class="row g-3 mb-3">
+            @if (Model.Imports.Any())
+            {
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">
+                            <i class="bi bi-box-arrow-in-down text-info me-1"></i> Phiếu nhập kho (@Model.Imports.Count)
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            @foreach (var r in Model.Imports)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-primary">@r.ReceiptCode</strong> — @r.Product?.Name
+                                        <div class="small text-muted">NCC: @r.Supplier?.Name • SL: @r.Quantity • @r.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    </div>
+                                    <a asp-controller="Imports" asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Exports.Any())
+            {
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">
+                            <i class="bi bi-box-arrow-up text-danger me-1"></i> Phiếu xuất kho (@Model.Exports.Count)
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            @foreach (var r in Model.Exports)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-danger">@r.ReceiptCode</strong> — @r.Product?.Name
+                                        <div class="small text-muted">Người nhận: @(r.Receiver ?? "N/A") • SL: @r.Quantity • @r.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    </div>
+                                    <a asp-controller="Exports" asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-danger">Chi tiết</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- 4. VỊ TRÍ Ô CHỨA -->
+        @if (Model.Bins.Any())
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-grid-3x3-gap text-warning me-1"></i> Ô chứa / Kệ (@Model.Bins.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã ô</th>
+                                <th>Tên ô</th>
+                                <th>Vị trí kho / kệ</th>
+                                <th>Sức chứa</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bin in Model.Bins)
+                            {
+                                int used = bin.ProductBatches?.Sum(x => x.Quantity) ?? 0;
+                                <tr>
+                                    <td class="fw-bold">@bin.Code</td>
+                                    <td>@bin.Name</td>
+                                    <td class="small text-muted">
+                                        @bin.WarehouseShelf?.WarehouseArea?.Warehouse?.Name ›
+                                        @bin.WarehouseShelf?.WarehouseArea?.Name ›
+                                        @bin.WarehouseShelf?.Name (Tầng @bin.FloorNumber)
+                                    </td>
+                                    <td>@used / @bin.MaxCapacity</td>
+                                    <td class="text-end">
+                                        <a asp-controller="WarehouseBins" asp-action="Index" asp-route-shelfId="@bin.WarehouseShelfId" class="btn btn-sm btn-outline-primary">
+                                            Mở kệ
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+

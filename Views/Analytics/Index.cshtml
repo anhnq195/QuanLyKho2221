@@ -1,0 +1,343 @@
+@model QuanLyKho2221.Controllers.WarehouseAnalyticsViewModel
+@{
+    ViewData["Title"] = "Phân tích hiệu suất & Luân chuyển kho";
+}
+
+<div class="container-fluid py-3">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+                Phân tích Hiệu suất Lấp đầy & Vòng quay Hàng tồn kho (Analytics)
+            </h3>
+            <p class="text-muted small mb-0">
+                Đo lường tỷ lệ sử dụng sức chứa kho (Occupancy Rate), hệ số vòng quay tồn kho (Turnover Ratio) và phát hiện hàng tồn chậm luân chuyển (FSN Analysis).
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <div class="btn-group btn-group-sm" role="group">
+                <a asp-action="Index" asp-route-days="30" class="btn @(Model.PeriodDays == 30 ? "btn-primary" : "btn-outline-primary")">30 ngày</a>
+                <a asp-action="Index" asp-route-days="90" class="btn @(Model.PeriodDays == 90 ? "btn-primary" : "btn-outline-primary")">90 ngày</a>
+                <a asp-action="Index" asp-route-days="180" class="btn @(Model.PeriodDays == 180 ? "btn-primary" : "btn-outline-primary")">180 ngày</a>
+                <a asp-action="Index" asp-route-days="365" class="btn @(Model.PeriodDays == 365 ? "btn-primary" : "btn-outline-primary")">365 ngày</a>
+            </div>
+
+            <a asp-action="ExportExcel" asp-route-days="@Model.PeriodDays" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel (2 Sheets)
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 THẺ KPI HIỆU SUẤT -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Tỷ lệ lấp đầy toàn kho</div>
+                            <h2 class="fw-bold text-primary mb-1">@Model.OverallOccupancyPercent%</h2>
+                            <small class="text-muted">Đang chứa @Model.TotalUsedCapacity.ToString("N0") / @Model.TotalMaxCapacity.ToString("N0")</small>
+                        </div>
+                        <div class="rounded-3 bg-primary bg-opacity-10 p-3">
+                            <i class="bi bi-pie-chart-fill fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Hệ số vòng quay (@Model.PeriodDays ngày)</div>
+                            <h2 class="fw-bold text-success mb-1">@Model.OverallTurnoverRate <small class="fs-6">vòng</small></h2>
+                            <small class="text-muted">Nhập: +@Model.TotalImportedInPeriod • Xuất: -@Model.TotalExportedInPeriod</small>
+                        </div>
+                        <div class="rounded-3 bg-success bg-opacity-10 p-3">
+                            <i class="bi bi-arrow-repeat fs-2 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Mặt hàng luân chuyển nhanh</div>
+                            <h2 class="fw-bold text-info mb-1">@Model.FastMovingCount</h2>
+                            <small class="text-muted">Turnover &ge; 1.0 hoặc xuất mạnh</small>
+                        </div>
+                        <div class="rounded-3 bg-info bg-opacity-10 p-3">
+                            <i class="bi bi-lightning-charge-fill fs-2 text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Hàng tồn đọng (Dead Stock)</div>
+                            <h2 class="fw-bold text-danger mb-1">@Model.DeadStockCount</h2>
+                            <small class="text-muted">Có tồn kho nhưng 0 xuất trong kỳ</small>
+                        </div>
+                        <div class="rounded-3 bg-danger bg-opacity-10 p-3">
+                            <i class="bi bi-snow2 fs-2 text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2 BIỂU ĐỒ KÈM NÚT TẢI ẢNH PNG (T97) -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <strong>
+                        <i class="bi bi-bar-chart-steps text-primary me-1"></i>
+                        Biểu đồ Sức chứa Đã sử dụng & Còn trống theo Kho
+                    </strong>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadChart('capacityChart', 'BieuDo_SucChuaKho.png')">
+                        <i class="bi bi-download me-1"></i> Tải ảnh PNG
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div style="height: 290px;">
+                        <canvas id="capacityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <strong>
+                        <i class="bi bi-speedometer text-success me-1"></i>
+                        Phân nhóm tốc độ luân chuyển (FSN)
+                    </strong>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadChart('velocityChart', 'BieuDo_TocDoLuanChuyen.png')">
+                        <i class="bi bi-download me-1"></i> Tải ảnh PNG
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div style="height: 290px;">
+                        <canvas id="velocityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG 1: TỶ LỆ LẤP ĐẦY TỪNG KHO (T108) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-bold">
+            <i class="bi bi-building text-primary me-1"></i>
+            1. Chi tiết Sức chứa & Tỷ lệ Lấp đầy theo từng Kho lưu trữ
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã kho</th>
+                        <th>Tên kho</th>
+                        <th class="text-center">Số khu vực</th>
+                        <th class="text-center">Ô đang dùng / Tổng ô</th>
+                        <th class="text-center">Số lượng đang chứa</th>
+                        <th class="text-center">Sức chứa tối đa</th>
+                        <th style="width: 240px;">Tỷ lệ lấp đầy (Occupancy)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var w in Model.WarehouseOccupancies)
+                    {
+                        string barColor = w.OccupancyPercent >= 85 ? "bg-danger" : (w.OccupancyPercent >= 65 ? "bg-warning" : "bg-success");
+                        <tr>
+                            <td class="font-monospace fw-bold">@w.WarehouseCode</td>
+                            <td class="fw-semibold">@w.WarehouseName</td>
+                            <td class="text-center">@w.TotalAreas</td>
+                            <td class="text-center">@w.OccupiedBins / @w.TotalBins ô</td>
+                            <td class="text-center fw-bold">@w.UsedQuantity.ToString("N0")</td>
+                            <td class="text-center text-muted">@w.MaxCapacity.ToString("N0")</td>
+                            <td>
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>Trống: @(Math.Max(0, w.MaxCapacity - w.UsedQuantity).ToString("N0"))</span>
+                                    <strong>@w.OccupancyPercent%</strong>
+                                </div>
+                                <div class="progress" style="height: 7px;">
+                                    <div class="progress-bar @barColor" style="width: @(Math.Min(100, w.OccupancyPercent))%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- BẢNG 2: PHÂN TÍCH VÒNG QUAY TỒN KHO & HÀNG CHẬM LUÂN CHUYỂN (T55, T98) -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <strong>
+                <i class="bi bi-table text-primary me-1"></i>
+                2. Bảng Phân tích Vòng quay Hàng tồn kho (Turnover Ratio) & Phân loại FSN (@Model.PeriodDays ngày)
+            </strong>
+
+            <select id="velocityFilter" class="form-select form-select-sm" style="max-width: 240px;">
+                <option value="ALL">-- Tất cả nhóm tốc độ --</option>
+                <option value="FAST">Luân chuyển nhanh (Fast-Moving)</option>
+                <option value="SLOW">Luân chuyển chậm (Slow-Moving)</option>
+                <option value="DEAD">Hàng tồn đọng (Dead Stock)</option>
+            </select>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="turnoverTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã SKU</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th class="text-center text-success">Nhập trong kỳ</th>
+                        <th class="text-center text-danger">Xuất trong kỳ</th>
+                        <th class="text-center">Tồn bình quân</th>
+                        <th class="text-center">Tồn hiện tại</th>
+                        <th class="text-end">Giá trị tồn</th>
+                        <th class="text-center text-primary">Vòng quay (Turnover)</th>
+                        <th class="text-center">Số ngày lưu kho (DSI)</th>
+                        <th>Phân nhóm FSN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.ProductTurnovers)
+                    {
+                        <tr data-velocity="@p.VelocityCode">
+                            <td><span class="badge bg-secondary font-monospace">@(p.Code ?? "N/A")</span></td>
+                            <td class="fw-semibold">
+                                <a asp-controller="StockCards" asp-action="Index" asp-route-productId="@p.ProductId" class="text-decoration-none">
+                                    @p.ProductName
+                                </a>
+                            </td>
+                            <td class="small text-muted">@p.CategoryName</td>
+                            <td class="text-center text-success fw-semibold">+@p.ImportedInPeriod</td>
+                            <td class="text-center text-danger fw-semibold">-@p.ExportedInPeriod</td>
+                            <td class="text-center text-muted">@p.AverageStock</td>
+                            <td class="text-center fw-bold">@p.CurrentStock</td>
+                            <td class="text-end">@p.InventoryValue.ToString("N0") đ</td>
+                            <td class="text-center fw-bold text-primary fs-6">@p.TurnoverRate.ToString("0.00")</td>
+                            <td class="text-center small">
+                                @(p.DaysSalesOfInventory.HasValue ? $"{p.DaysSalesOfInventory} ngày" : "—")
+                            </td>
+                            <td>
+                                @if (p.VelocityCode == "FAST")
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-lightning-fill me-1"></i>@p.VelocityLabel</span>
+                                }
+                                else if (p.VelocityCode == "SLOW")
+                                {
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>@p.VelocityLabel</span>
+                                }
+                                else if (p.VelocityCode == "DEAD")
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-snow2 me-1"></i>@p.VelocityLabel</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@p.VelocityLabel</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const whNames = @Html.Raw(Model.WarehouseNamesJson);
+        const whUsed = @Html.Raw(Model.WarehouseUsedJson);
+        const whFree = @Html.Raw(Model.WarehouseFreeJson);
+        const velCounts = @Html.Raw(Model.VelocityCountsJson);
+
+        new Chart(document.getElementById('capacityChart'), {
+            type: 'bar',
+            data: {
+                labels: whNames,
+                datasets: [
+                    {
+                        label: 'Đang chứa (Đã dùng)',
+                        data: whUsed,
+                        backgroundColor: '#2563eb'
+                    },
+                    {
+                        label: 'Sức chứa còn trống',
+                        data: whFree,
+                        backgroundColor: '#cbd5e1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('velocityChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Luân chuyển nhanh (Fast)', 'Luân chuyển chậm (Slow)', 'Tồn đọng (Dead Stock)'],
+                datasets: [{
+                    data: velCounts,
+                    backgroundColor: ['#16a34a', '#f59e0b', '#dc2626']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Tải biểu đồ ra file ảnh PNG (T97)
+        function downloadChart(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        // Lọc nhanh bảng FSN
+        document.getElementById('velocityFilter')?.addEventListener('change', function () {
+            const v = this.value;
+            document.querySelectorAll('#turnoverTable tbody tr').forEach(tr => {
+                tr.style.display = (v === 'ALL' || tr.dataset.velocity === v) ? '' : 'none';
+            });
+        });
+    </script>
+}
+

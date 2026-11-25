@@ -1,31 +1,230 @@
+/* ================================
+   1. CẤU HÌNH CHUNG (GIỮ NGUYÊN KÍCH CỠ)
+================================ */
 html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    margin-bottom: 60px;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    line-height: 1.5;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+/* ================================
+   2. TIÊU ĐỀ
+================================ */
+h1, h2, h3, h4, h5, h6 {
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: -0.25px;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+h1 {
+    font-size: 1.7rem;
+}
+
+h2 {
+    font-size: 1.45rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+}
+
+/* ================================
+   3. CARD HIỆN ĐẠI
+================================ */
+.card {
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.045);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+    .card:hover {
+        box-shadow: 0 10px 26px -4px rgba(15, 23, 42, 0.085);
+    }
+
+.card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 13px 16px;
+    font-weight: 700;
+    color: #0f172a;
+    border-top-left-radius: 14px !important;
+    border-top-right-radius: 14px !important;
+}
+
+/* ================================
+   4. BẢNG DỮ LIỆU
+================================ */
+.table {
+    font-size: 0.95rem;
+    color: #334155;
+    margin-bottom: 0;
+}
+
+    .table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.35px;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .table th,
+    .table td {
+        padding: 11px 13px;
+        vertical-align: middle;
+        border-color: #f1f5f9;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+        .table tbody tr:hover {
+            background: #f5f8ff;
+        }
+
+/* ================================
+   5. NÚT BẤM
+================================ */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.18s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-color: #1d4ed8;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.2);
+}
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        border-color: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.28);
+    }
+
+.btn-success {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    border-color: #15803d;
+    box-shadow: 0 3px 10px rgba(22, 163, 74, 0.2);
+}
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+        transform: translateY(-1px);
+    }
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #b91c1c;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+.btn-outline-dark:hover {
+    transform: translateY(-1px);
+}
+
+/* ================================
+   6. FORM NHẬP LIỆU
+================================ */
+.form-control,
+.form-select {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 11px;
+    background-color: #ffffff;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+.form-label {
+    color: #334155;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* ================================
+   7. BADGE TRẠNG THÁI
+================================ */
+.badge {
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-weight: 600;
+    letter-spacing: 0.15px;
+}
+
+/* ================================
+   8. ALERT
+================================ */
+.alert {
+    border: 1px solid transparent;
+    border-radius: 10px;
+}
+
+/* ================================
+   9. PHÂN TRANG
+================================ */
+.pagination {
+    gap: 4px;
+}
+
+.page-link {
+    border-radius: 6px !important;
+    color: #2563eb;
+    border-color: #e2e8f0;
+}
+
+.page-item.active .page-link {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+/* ================================
+   10. FOCUS
+================================ */
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ================================
+   11. RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.35rem;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    .table {
+        font-size: 0.88rem;
+    }
 }

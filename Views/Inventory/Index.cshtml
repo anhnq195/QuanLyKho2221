@@ -1,0 +1,327 @@
+﻿@model IEnumerable<QuanLyKho2221.Models.Product>
+
+@{
+    ViewData["Title"] = "Báo cáo tồn kho";
+
+    var products = Model?.ToList() ?? new List<QuanLyKho2221.Models.Product>();
+
+    int totalProducts = ViewBag.TotalProducts ?? 0;
+    int totalQuantity = ViewBag.TotalQuantity ?? 0;
+    int lowStock = ViewBag.LowStock ?? 0;
+    int outOfStock = ViewBag.OutOfStock ?? 0;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-clipboard-data text-primary me-2"></i>
+                Báo cáo tồn kho
+            </h2>
+            <p class="text-muted mb-0">
+                Theo dõi số lượng và tình trạng hàng hóa trong kho
+            </p>
+        </div>
+
+        <a asp-controller="Dashboard"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Về Dashboard
+        </a>
+    </div>
+
+    <!-- THỐNG KÊ -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 inventory-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Tổng sản phẩm</p>
+                        <h3 class="fw-bold mb-0">@totalProducts</h3>
+                    </div>
+                    <div class="inventory-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 inventory-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Tổng hàng tồn</p>
+                        <h3 class="fw-bold mb-0">@totalQuantity.ToString("N0")</h3>
+                    </div>
+                    <div class="inventory-icon bg-success-subtle text-success">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 inventory-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Sắp hết hàng</p>
+                        <h3 class="fw-bold text-warning mb-0">@lowStock</h3>
+                    </div>
+                    <div class="inventory-icon bg-warning-subtle text-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 inventory-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Hết hàng</p>
+                        <h3 class="fw-bold text-danger mb-0">@outOfStock</h3>
+                    </div>
+                    <div class="inventory-icon bg-danger-subtle text-danger">
+                        <i class="bi bi-box2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BỘ LỌC -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-funnel text-primary me-2"></i>
+                Tìm kiếm và lọc tồn kho
+            </h5>
+
+            <form asp-controller="Inventory"
+                  asp-action="Index"
+                  method="get">
+
+                <div class="row g-3">
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">Tìm sản phẩm</label>
+                        <input type="text"
+                               name="keyword"
+                               value="@ViewBag.Keyword"
+                               class="form-control"
+                               placeholder="Nhập tên hoặc mã sản phẩm..." />
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-semibold">Tình trạng</label>
+                        <select name="stockStatus" class="form-select">
+                            <option value="">Tất cả tình trạng</option>
+
+                            <option value="available" selected="@(ViewBag.StockStatus == "available")">
+                                Còn hàng
+                            </option>
+
+                            <option value="low" selected="@(ViewBag.StockStatus == "low")">
+                                Sắp hết hàng
+                            </option>
+
+                            <option value="out" selected="@(ViewBag.StockStatus == "out")">
+                                Hết hàng
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-semibold">Sắp xếp</label>
+                        <select name="sortOrder" class="form-select">
+
+                            <option value="" selected="@(string.IsNullOrEmpty(ViewBag.SortOrder))">
+                                Tên A - Z
+                            </option>
+
+                            <option value="name_desc" selected="@(ViewBag.SortOrder == "name_desc")">
+                                Tên Z - A
+                            </option>
+
+                            <option value="quantity_asc" selected="@(ViewBag.SortOrder == "quantity_asc")">
+                                Số lượng tăng dần
+                            </option>
+
+                            <option value="quantity_desc" selected="@(ViewBag.SortOrder == "quantity_desc")">
+                                Số lượng giảm dần
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search me-1"></i>
+                            Lọc
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary"
+                           title="Xóa bộ lọc">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CHI TIẾT TỒN KHO -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">Chi tiết tồn kho</h5>
+                    <p class="text-muted small mb-0">
+                        Tìm thấy @products.Count sản phẩm
+                    </p>
+                </div>
+
+                <a asp-controller="Inventory"
+                   asp-action="ExportExcel"
+                   asp-route-keyword="@ViewBag.Keyword"
+                   asp-route-stockStatus="@ViewBag.StockStatus"
+                   asp-route-sortOrder="@ViewBag.SortOrder"
+                   class="btn btn-success">
+                    <i class="bi bi-file-earmark-excel me-1"></i>
+                    Xuất Excel
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã sản phẩm</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-center">Tình trạng</th>
+                            <th class="text-center">Lịch sử</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!products.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Không tìm thấy sản phẩm phù hợp.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in products)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="text-muted">
+                                            @(item.Code ?? "Chưa có mã")
+                                        </span>
+                                    </td>
+
+                                    <td class="fw-semibold">@item.Name</td>
+
+                                    <td>
+                                        @(item.Category?.Name ?? "Chưa phân loại")
+                                    </td>
+
+                                    <td class="text-center fw-bold">
+                                        @item.Quantity.ToString("N0")
+                                    </td>
+
+                                    <td class="text-center">
+                                        @if (item.Quantity <= 0)
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                Hết hàng
+                                            </span>
+                                        }
+                                        else if (item.Quantity <= 5)
+                                        {
+                                            <span class="badge bg-warning-subtle text-dark">
+                                                Sắp hết
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success-subtle text-success">
+                                                Còn hàng
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-controller="Inventory"
+                                           asp-action="History"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-clock-history me-1"></i>
+                                            Xem
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .inventory-card {
+        border-radius: 14px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .inventory-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+        }
+
+    .inventory-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .table th {
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .table td {
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8faff;
+    }
+</style>

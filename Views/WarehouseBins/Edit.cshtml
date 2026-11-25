@@ -1,0 +1,119 @@
+@model QuanLyKho2221.Models.WarehouseBin
+
+@{
+    ViewData["Title"] = "Sửa ô chứa";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-pencil-square text-primary"></i>
+                Sửa thông tin ô chứa
+            </h2>
+            <p class="text-muted mb-0">
+                Kệ: <strong>@ViewBag.ShelfName</strong>
+            </p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <i class="bi bi-box-seam me-2"></i>
+            Thông tin ô chứa
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"></div>
+
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="WarehouseShelfId" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Code" class="form-label">
+                            Mã ô chứa
+                        </label>
+
+                        <input asp-for="Code"
+                               class="form-control"
+                               placeholder="Nhập mã ô chứa" />
+
+                        <span asp-validation-for="Code"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Name" class="form-label">
+                            Tên ô chứa
+                        </label>
+
+                        <input asp-for="Name"
+                               class="form-control"
+                               placeholder="Nhập tên ô chứa" />
+
+                        <span asp-validation-for="Name"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FloorNumber" class="form-label">
+                            Tầng
+                        </label>
+
+                        <input asp-for="FloorNumber"
+                               type="number"
+                               min="1"
+                               max="100"
+                               class="form-control"
+                               placeholder="Nhập số tầng" />
+
+                        <span asp-validation-for="FloorNumber"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="MaxCapacity" class="form-label">
+                            Sức chứa tối đa (số lượng)
+                        </label>
+
+                        <input asp-for="MaxCapacity"
+                               type="number"
+                               min="1"
+                               class="form-control"
+                               placeholder="Nhập sức chứa tối đa" />
+
+                        <span asp-validation-for="MaxCapacity"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>
+                        Lưu thay đổi
+                    </button>
+
+                    <a asp-action="Index"
+                       asp-route-shelfId="@Model.WarehouseShelfId"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

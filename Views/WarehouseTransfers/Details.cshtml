@@ -1,0 +1,105 @@
+﻿@model QuanLyKho2221.Models.WarehouseTransfer
+
+@{
+    ViewData["Title"] = "Chi tiết phiếu điều chuyển";
+}
+
+<div class="container py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Chi tiết phiếu điều chuyển</h2>
+            <p class="text-muted mb-0">Thông tin chi tiết giao dịch kho</p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Quay lại
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">
+                <i class="bi bi-receipt"></i>
+                Phiếu: @Model.TransferCode
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Mã phiếu</div>
+                    <h5 class="fw-bold text-primary">@Model.TransferCode</h5>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Ngày điều chuyển</div>
+                    <h5>@Model.TransferDate.ToString("dd/MM/yyyy HH:mm")</h5>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Sản phẩm</div>
+                    <h5>@(Model.ProductBatch?.Product?.Name ?? "Không có dữ liệu")</h5>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Mã lô hàng</div>
+                    <h5>@Model.ProductBatch?.BatchCode</h5>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card bg-light border-0">
+                        <div class="card-body text-center">
+                            <i class="bi bi-box-arrow-right fs-2 text-danger"></i>
+                            <div class="text-muted mt-2">Ô kho nguồn</div>
+                            <h4 class="fw-bold">
+                                @Model.SourceBin?.Code
+                            </h4>
+                            <div>@Model.SourceBin?.Name</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-arrow-left-right fs-2 text-primary"></i>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card bg-light border-0">
+                        <div class="card-body text-center">
+                            <i class="bi bi-box-arrow-in-down fs-2 text-success"></i>
+                            <div class="text-muted mt-2">Ô kho đích</div>
+                            <h4 class="fw-bold">
+                                @Model.DestinationBin?.Code
+                            </h4>
+                            <div>@Model.DestinationBin?.Name</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Số lượng điều chuyển</div>
+                    <h3 class="fw-bold text-success">@Model.Quantity</h3>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted mb-1">Người thực hiện</div>
+                    <h5>@Model.CreatedBy</h5>
+                </div>
+
+                <div class="col-12">
+                    <div class="text-muted mb-1">Ghi chú</div>
+                    <p>
+                        @(string.IsNullOrWhiteSpace(Model.Note)
+                            ? "Không có ghi chú"
+                            : Model.Note)
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

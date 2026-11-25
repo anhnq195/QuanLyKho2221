@@ -1,0 +1,197 @@
+﻿@model IEnumerable<QuanLyKho2221.Models.WarehouseTransfer>
+
+@{
+    ViewData["Title"] = "Quản lý điều chuyển kho";
+    var transfers = Model ?? Enumerable.Empty<QuanLyKho2221.Models.WarehouseTransfer>();
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-arrow-left-right text-primary"></i>
+                Điều chuyển kho
+            </h2>
+            <p class="text-muted mb-0">
+                Quản lý hàng hóa giữa các vị trí trong kho
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Tạo phiếu điều chuyển
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tổng phiếu điều chuyển</div>
+                    <h3 class="fw-bold text-primary mb-0">
+                        @transfers.Count()
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tổng số lượng điều chuyển</div>
+                    <h3 class="fw-bold text-success mb-0">
+                        @transfers.Sum(t => t.Quantity)
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Phiếu trong tháng này</div>
+                    <h3 class="fw-bold text-warning mb-0">
+                        @transfers.Count(t =>
+                            t.TransferDate.Month == DateTime.Now.Month &&
+                            t.TransferDate.Year == DateTime.Now.Year)
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-6">
+                    <h5 class="fw-bold mb-0">Danh sách phiếu</h5>
+                </div>
+                <div class="col-md-6">
+                    <input type="text"
+                           id="searchTransfer"
+                           class="form-control"
+                           placeholder="Tìm mã phiếu, sản phẩm, mã lô..." />
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="transferTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã phiếu</th>
+                            <th>Ngày điều chuyển</th>
+                            <th>Sản phẩm</th>
+                            <th>Mã lô</th>
+                            <th>Ô nguồn</th>
+                            <th>Ô đích</th>
+                            <th>Số lượng</th>
+                            <th>Người thực hiện</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @{
+                            var index = 1;
+                        }
+
+                        @foreach (var item in transfers)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td class="fw-semibold text-primary">
+                                    @item.TransferCode
+                                </td>
+                                <td>
+                                    @item.TransferDate.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td>
+                                    @(item.ProductBatch?.Product?.Name ?? "Không có dữ liệu")
+                                </td>
+                                <td>@item.ProductBatch?.BatchCode</td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        @item.SourceBin?.Code
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        @item.DestinationBin?.Code
+                                    </span>
+                                </td>
+                                <td class="fw-bold text-success">
+                                    @item.Quantity
+                                </td>
+                                <td>@item.CreatedBy</td>
+                                <td>
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                        Xem
+                                    </a>
+                                </td>
+                            </tr>
+
+                            index++;
+                        }
+
+                        <tr id="emptySearch" style="display:none">
+                            <td colspan="10" class="text-center text-muted py-4">
+                                Không tìm thấy kết quả phù hợp.
+                            </td>
+                        </tr>
+
+                        @if (!transfers.Any())
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Chưa có phiếu điều chuyển nào.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById("searchTransfer");
+        const tableRows = document.querySelectorAll("#transferTable tbody tr:not(#emptySearch)");
+        const emptySearch = document.getElementById("emptySearch");
+
+        searchInput.addEventListener("input", function() {
+            const keyword = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                const content = row.innerText.toLowerCase();
+                const matched = content.includes(keyword);
+
+                row.style.display = matched ? "" : "none";
+
+                if (matched) visibleCount++;
+            });
+
+            emptySearch.style.display =
+                visibleCount === 0 && keyword !== "" ? "" : "none";
+        });
+    </script>
+}

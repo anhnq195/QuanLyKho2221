@@ -1,0 +1,474 @@
+@model QuanLyKho2221.Models.InventoryCheck
+
+@{
+    ViewData["Title"] = "Chi tiết phiếu kiểm kê";
+
+    var details = Model.Details ?? new List<QuanLyKho2221.Models.InventoryCheckDetail>();
+
+    int totalProducts = details.Count;
+    int shortageCount = details.Count(x => x.Difference < 0);
+    int surplusCount = details.Count(x => x.Difference > 0);
+    int matchedCount = details.Count(x => x.Difference == 0);
+
+    int totalShortage = details.Where(x => x.Difference < 0).Sum(x => Math.Abs(x.Difference));
+    int totalSurplus = details.Where(x => x.Difference > 0).Sum(x => x.Difference);
+
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-clipboard-data text-primary me-2"></i>
+                Chi tiết phiếu kiểm kê
+            </h2>
+            <p class="text-muted mb-0">
+                Thông tin và kết quả kiểm kê hàng hóa
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="ExportExcel" asp-route-id="@Model.Id" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>
+                Xuất biên bản Excel
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-primary">
+                <i class="bi bi-printer me-1"></i>
+                In biên bản
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                Quay lại danh sách
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- THÔNG TIN PHIẾU -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <p class="text-muted small mb-1">Mã phiếu kiểm kê</p>
+                    <h4 class="fw-bold text-primary mb-0">@Model.CheckCode</h4>
+                </div>
+
+                @if (Model.IsConfirmed)
+                {
+                    <span class="badge bg-success-subtle text-success px-3 py-2">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        Đã xác nhận
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning-subtle text-dark px-3 py-2">
+                        <i class="bi bi-clock me-1"></i>
+                        Chờ xác nhận
+                    </span>
+                }
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12 col-md-4">
+                    <div class="info-item">
+                        <i class="bi bi-calendar3 text-primary"></i>
+                        <div>
+                            <div class="text-muted small">Ngày kiểm kê</div>
+                            <div class="fw-semibold">
+                                @Model.CheckDate.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="info-item">
+                        <i class="bi bi-person-circle text-primary"></i>
+                        <div>
+                            <div class="text-muted small">Người tạo</div>
+                            <div class="fw-semibold">@Model.CreatedBy</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="info-item">
+                        <i class="bi bi-box-seam text-primary"></i>
+                        <div>
+                            <div class="text-muted small">Số sản phẩm</div>
+                            <div class="fw-semibold">@totalProducts sản phẩm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <hr />
+                    <div class="text-muted small mb-1">Ghi chú kiểm kê</div>
+                    <div class="fw-medium">
+                        @(string.IsNullOrWhiteSpace(Model.Note)
+                            ? "Không có ghi chú"
+                            : Model.Note)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- THỐNG KÊ -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 result-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Tổng sản phẩm</p>
+                        <h3 class="fw-bold mb-0">@totalProducts</h3>
+                    </div>
+                    <div class="result-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 result-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Sản phẩm thiếu</p>
+                        <h3 class="fw-bold text-danger mb-0">@shortageCount</h3>
+                        <small class="text-muted">Thiếu @totalShortage sản phẩm</small>
+                    </div>
+                    <div class="result-icon bg-danger-subtle text-danger">
+                        <i class="bi bi-arrow-down-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 result-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Sản phẩm thừa</p>
+                        <h3 class="fw-bold text-success mb-0">@surplusCount</h3>
+                        <small class="text-muted">Thừa @totalSurplus sản phẩm</small>
+                    </div>
+                    <div class="result-icon bg-success-subtle text-success">
+                        <i class="bi bi-arrow-up-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 result-card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-2">Không chênh lệch</p>
+                        <h3 class="fw-bold text-primary mb-0">@matchedCount</h3>
+                    </div>
+                    <div class="result-icon bg-info-subtle text-info">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BẢNG KẾT QUẢ -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white p-4">
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-4">
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-list-check text-primary me-2"></i>
+                        Kết quả kiểm kê
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Đang hiển thị <strong id="detailVisibleCount">@totalProducts</strong> / @totalProducts mục
+                    </p>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white text-primary"><i class="bi bi-search"></i></span>
+                        <input type="text"
+                               id="detailSearchInput"
+                               class="form-control"
+                               placeholder="Tìm theo Mã SKU, Tên sản phẩm, Mã lô, Vị trí kệ..." />
+                    </div>
+                </div>
+
+                <div class="col-lg-3">
+                    <select id="detailStatusFilter" class="form-select form-select-sm">
+                        <option value="ALL">-- Tất cả (@totalProducts) --</option>
+                        <option value="CHANGED">Chỉ xem mục lệch (@(shortageCount + surplusCount))</option>
+                        <option value="SHORTAGE">Thiếu hàng (@shortageCount)</option>
+                        <option value="SURPLUS">Thừa hàng (@surplusCount)</option>
+                        <option value="MATCHED">Khớp số lượng (@matchedCount)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="table-responsive" style="max-height: 580px; overflow-y: auto;">
+                <table class="table table-hover align-middle" id="detailCheckTable">
+                    <thead class="table-light" style="position: sticky; top: 0; z-index: 5;">
+                        <tr>
+                            <th class="text-center">STT</th>
+                            <th>Mã SKU</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Mã lô &amp; Vị trí</th>
+                            <th class="text-center">Tồn hệ thống</th>
+                            <th class="text-center">Thực tế</th>
+                            <th class="text-center">Chênh lệch</th>
+                            <th class="text-center">Kết quả</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (details.Any())
+                        {
+                            var index = 1;
+
+                            foreach (var item in details)
+                            {
+                                var bin = item.ProductBatch?.WarehouseBin;
+                                var shelf = bin?.WarehouseShelf;
+                                var area = shelf?.WarehouseArea;
+                                var wh = area?.Warehouse;
+                                string locText = wh != null ? $"{wh.Name} › {shelf?.Name} › Ô {bin?.Code}" : "Chưa phân lô";
+                                string statusType = item.Difference > 0 ? "SURPLUS" : (item.Difference < 0 ? "SHORTAGE" : "MATCHED");
+                                string rowSearch = $"{item.Product?.Code} {item.Product?.Name} {item.ProductBatch?.BatchCode} {locText}".ToLowerInvariant();
+
+                                <tr class="detail-row" data-search="@rowSearch" data-status="@statusType">
+                                    <td class="text-center text-muted">@index</td>
+                                    <td>
+                                        <a asp-controller="Products"
+                                           asp-action="Details"
+                                           asp-route-id="@item.ProductId"
+                                           class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-decoration-none"
+                                           title="Xem chi tiết sản phẩm">
+                                            @(string.IsNullOrWhiteSpace(item.Product?.Code) ? $"SP-{item.ProductId:D4}" : item.Product.Code)
+                                        </a>
+                                    </td>
+                                    <td class="fw-semibold">
+                                        <a asp-controller="Products"
+                                           asp-action="Details"
+                                           asp-route-id="@item.ProductId"
+                                           class="text-dark text-decoration-none"
+                                           title="Xem chi tiết sản phẩm">
+                                            @(item.Product?.Name ?? "Sản phẩm không còn tồn tại")
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info-subtle text-dark border font-monospace">@(item.ProductBatch?.BatchCode ?? "Chưa phân lô")</span>
+                                        <div class="small text-muted">@locText</div>
+                                    </td>
+                                    <td class="text-center">
+                                        @item.SystemQuantity.ToString("N0")
+                                    </td>
+                                    <td class="text-center fw-semibold">
+                                        @item.ActualQuantity.ToString("N0")
+                                    </td>
+                                    <td class="text-center fw-bold">
+                                        @if (item.Difference > 0)
+                                        {
+                                            <span class="text-success">+@item.Difference</span>
+                                        }
+                                        else if (item.Difference < 0)
+                                        {
+                                            <span class="text-danger">@item.Difference</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Difference > 0)
+                                        {
+                                            <span class="badge bg-success-subtle text-success">Thừa hàng</span>
+                                        }
+                                        else if (item.Difference < 0)
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger">Thiếu hàng</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary">Khớp</span>
+                                        }
+                                    </td>
+                                </tr>
+
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Phiếu chưa có sản phẩm.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3 mt-3 small">
+                <span><i class="bi bi-circle-fill text-success me-1"></i>Thừa hàng</span>
+                <span><i class="bi bi-circle-fill text-danger me-1"></i>Thiếu hàng</span>
+                <span><i class="bi bi-circle-fill text-secondary me-1"></i>Khớp số lượng</span>
+            </div>
+
+            <hr class="my-4" />
+
+            <!-- KHU VỰC XÁC NHẬN -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+                @if (Model.IsConfirmed)
+                {
+                    <div class="text-success fw-semibold">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        Phiếu đã xác nhận và tồn kho đã được cập nhật.
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Phiếu đang chờ Admin kiểm tra và xác nhận.
+                    </div>
+                }
+
+                @if (isAdmin && !Model.IsConfirmed && details.Any())
+                {
+                    <form asp-action="Confirm"
+                          asp-route-id="@Model.Id"
+                          method="post"
+                          onsubmit="return confirm('Bạn chắc chắn muốn xác nhận phiếu? Tồn kho sẽ được cập nhật theo số lượng thực tế.');">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Xác nhận kiểm kê
+                        </button>
+                    </form>
+                }
+                else if (!isAdmin && !Model.IsConfirmed)
+                {
+                    <span class="badge bg-warning-subtle text-dark p-2">
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        Chờ Admin xác nhận
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+        .info-item > i {
+            font-size: 22px;
+        }
+
+    .result-card {
+        border-radius: 14px;
+        transition: transform 0.2s ease;
+    }
+
+        .result-card:hover {
+            transform: translateY(-3px);
+        }
+
+    .result-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .table th {
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .table td {
+        font-size: 14px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            const searchInput = document.getElementById("detailSearchInput");
+            const statusFilter = document.getElementById("detailStatusFilter");
+            const visibleCountEl = document.getElementById("detailVisibleCount");
+            const rows = Array.from(document.querySelectorAll("#detailCheckTable tbody tr.detail-row"));
+
+            function applyDetailFilter() {
+                const kw = (searchInput?.value || "").toLowerCase().trim();
+                const st = statusFilter?.value || "ALL";
+                let visible = 0;
+
+                rows.forEach(tr => {
+                    const matchKw = !kw || tr.dataset.search.includes(kw);
+                    const rowSt = tr.dataset.status;
+
+                    let matchSt = true;
+                    if (st === "CHANGED") matchSt = rowSt !== "MATCHED";
+                    else if (st !== "ALL") matchSt = rowSt === st;
+
+                    if (matchKw && matchSt) {
+                        tr.style.display = "";
+                        visible++;
+                    } else {
+                        tr.style.display = "none";
+                    }
+                });
+
+                if (visibleCountEl) visibleCountEl.textContent = visible;
+            }
+
+            searchInput?.addEventListener("input", applyDetailFilter);
+            statusFilter?.addEventListener("change", applyDetailFilter);
+        })();
+    </script>
+}

@@ -1,0 +1,313 @@
+@model IEnumerable<QuanLyKho2221.Models.ExportReceipt>
+
+@{
+    ViewData["Title"] = "Danh sách phiếu xuất kho";
+
+    var receipts = Model?.ToList() ?? new List<QuanLyKho2221.Models.ExportReceipt>();
+
+    string StatusText(string status)
+    {
+        return status switch
+        {
+            ReceiptStatus.Pending => "Chờ duyệt",
+            ReceiptStatus.Approved => "Đã duyệt",
+            ReceiptStatus.Rejected => "Từ chối",
+            ReceiptStatus.Cancelled => "Đã hủy",
+            _ => status
+        };
+    }
+
+    string StatusClass(string status)
+    {
+        return status switch
+        {
+            ReceiptStatus.Pending => "bg-warning text-dark",
+            ReceiptStatus.Approved => "bg-success",
+            ReceiptStatus.Rejected => "bg-danger",
+            ReceiptStatus.Cancelled => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    var pendingCount = receipts.Count(x => x.Status == ReceiptStatus.Pending);
+    var approvedCount = receipts.Count(x => x.Status == ReceiptStatus.Approved);
+    var rejectedCount = receipts.Count(x => x.Status == ReceiptStatus.Rejected);
+    var cancelledCount = receipts.Count(x => x.Status == ReceiptStatus.Cancelled);
+}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-box-arrow-up text-primary me-2"></i>
+                Phiếu xuất kho
+            </h2>
+            <p class="text-muted mb-0">
+                Quản lý và theo dõi các phiếu xuất hàng trong kho.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="PickingList" class="btn btn-outline-primary">
+                <i class="bi bi-signpost-split me-1"></i>
+                Phiếu soạn hàng tối ưu lộ trình (Picking List)
+            </a>
+
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>
+                Tạo phiếu xuất
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- THỐNG KÊ -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Tổng phiếu</div>
+                            <h3 class="fw-bold mb-0">@receipts.Count</h3>
+                        </div>
+                        <i class="bi bi-receipt fs-2 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Chờ duyệt</div>
+                            <h3 class="fw-bold text-warning mb-0">@pendingCount</h3>
+                        </div>
+                        <i class="bi bi-clock-history fs-2 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Đã duyệt</div>
+                            <h3 class="fw-bold text-success mb-0">@approvedCount</h3>
+                        </div>
+                        <i class="bi bi-check-circle fs-2 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Từ chối / Đã hủy</div>
+                            <h3 class="fw-bold text-danger mb-0">
+                                @(rejectedCount + cancelledCount)
+                            </h3>
+                        </div>
+                        <i class="bi bi-x-circle fs-2 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TÌM KIẾM -->
+    <div class="card mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-search text-primary me-2"></i>
+                Tìm kiếm phiếu xuất
+            </h5>
+
+            <form asp-action="Index" method="get">
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-4">
+                        <label class="form-label">Từ khóa</label>
+                        <input type="text"
+                               name="searchString"
+                               value="@ViewBag.SearchString"
+                               class="form-control"
+                               placeholder="Mã phiếu, sản phẩm, người nhận..." />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date"
+                               name="fromDate"
+                               value="@ViewBag.FromDate"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date"
+                               name="toDate"
+                               value="@ViewBag.ToDate"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search me-1"></i>
+                            Tìm
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary"
+                           title="Làm mới">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- DANH SÁCH -->
+    <div class="card">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-list-ul text-primary me-2"></i>
+                    Danh sách phiếu xuất
+                </h5>
+
+                <span class="badge bg-light text-dark border">
+                    Tổng: @receipts.Count phiếu
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Sản phẩm</th>
+                            <th>Mã lô</th>
+                            <th>Số lượng</th>
+                            <th>Người nhận</th>
+                            <th>Ngày tạo</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (receipts.Any())
+                        {
+                            @foreach (var item in receipts)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold text-primary">
+                                            @item.ReceiptCode
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @(item.Product?.Name ?? "Không xác định")
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                            @(item.ProductBatch?.BatchCode ?? "Không xác định")
+                                        </span>
+                                    </td>
+
+                                    <td class="fw-semibold">
+                                        @item.Quantity
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(item.Receiver)
+                                            ? "Chưa có"
+                                            : item.Receiver)
+                                    </td>
+
+                                    <td>
+                                        @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @StatusClass(item.Status)">
+                                            @StatusText(item.Status)
+                                        </span>
+
+                                        @if (item.Status == ReceiptStatus.Rejected &&
+                                             !string.IsNullOrWhiteSpace(item.RejectionReason))
+                                        {
+                                            <div class="small text-danger mt-1">
+                                                Lý do: @item.RejectionReason
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>
+                                            Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                                    <strong>Chưa có phiếu xuất kho nào.</strong>
+                                    <div class="text-muted small mt-1">
+                                        Hãy tạo phiếu xuất mới để bắt đầu.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>

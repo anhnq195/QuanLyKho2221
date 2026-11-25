@@ -1,0 +1,634 @@
+﻿@model IEnumerable<QuanLyKho2221.Models.ActivityLog>
+
+@{
+    ViewData["Title"] = "Nhật ký hoạt động";
+
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int importCount = ViewBag.ImportCount ?? 0;
+    int exportCount = ViewBag.ExportCount ?? 0;
+    int transferCount = ViewBag.TransferCount ?? 0;
+    int loginCount = ViewBag.LoginCount ?? 0;
+    int logoutCount = ViewBag.LogoutCount ?? 0;
+
+    int addProduct = ViewBag.AddProductCount ?? 0;
+    int editProduct = ViewBag.EditProductCount ?? 0;
+    int deleteProduct = ViewBag.DeleteProductCount ?? 0;
+
+    int addCategory = ViewBag.AddCategoryCount ?? 0;
+    int editCategory = ViewBag.EditCategoryCount ?? 0;
+    int deleteCategory = ViewBag.DeleteCategoryCount ?? 0;
+
+    int addSupplier = ViewBag.AddSupplierCount ?? 0;
+    int editSupplier = ViewBag.EditSupplierCount ?? 0;
+    int deleteSupplier = ViewBag.DeleteSupplierCount ?? 0;
+
+    int createInventoryCheck = ViewBag.CreateInventoryCheckCount ?? 0;
+    int confirmInventoryCheck = ViewBag.ConfirmInventoryCheckCount ?? 0;
+}
+
+<style>
+    .activity-stat-card {
+        border: none;
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .activity-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10) !important;
+        }
+
+    .activity-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+        flex-shrink: 0;
+    }
+
+    .activity-stat-number {
+        font-size: 27px;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .activity-section-title {
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .activity-table th {
+        white-space: nowrap;
+    }
+
+    .activity-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold">
+                <i class="bi bi-activity text-primary"></i>
+                Nhật ký hoạt động
+            </h2>
+            <p class="text-muted mb-0">
+                Theo dõi toàn bộ thao tác của người dùng trong hệ thống
+            </p>
+        </div>
+
+        <a asp-controller="Dashboard"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-house-door"></i>
+            Dashboard
+        </a>
+    </div>
+
+    <!-- TỔNG QUAN -->
+    <h5 class="activity-section-title">
+        <i class="bi bi-bar-chart-line text-primary"></i>
+        Tổng quan hoạt động
+    </h5>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Tổng hoạt động</p>
+                        <h3 class="activity-stat-number text-primary">@totalCount</h3>
+                    </div>
+                    <div class="activity-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Nhập kho</p>
+                        <h3 class="activity-stat-number text-success">@importCount</h3>
+                    </div>
+                    <div class="activity-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Xuất kho</p>
+                        <h3 class="activity-stat-number text-danger">@exportCount</h3>
+                    </div>
+                    <div class="activity-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-box-arrow-up"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Điều chuyển kho</p>
+                        <h3 class="activity-stat-number text-info">@transferCount</h3>
+                    </div>
+                    <div class="activity-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Đăng nhập</p>
+                        <h3 class="activity-stat-number text-primary">@loginCount</h3>
+                    </div>
+                    <div class="activity-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Đăng xuất</p>
+                        <h3 class="activity-stat-number text-secondary">@logoutCount</h3>
+                    </div>
+                    <div class="activity-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SẢN PHẨM -->
+    <h5 class="activity-section-title">
+        <i class="bi bi-box-seam text-primary"></i>
+        Hoạt động sản phẩm
+    </h5>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Thêm sản phẩm</p>
+                        <h3 class="activity-stat-number text-success">@addProduct</h3>
+                    </div>
+                    <div class="activity-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-plus-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Sửa sản phẩm</p>
+                        <h3 class="activity-stat-number text-warning">@editProduct</h3>
+                    </div>
+                    <div class="activity-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Xóa sản phẩm</p>
+                        <h3 class="activity-stat-number text-danger">@deleteProduct</h3>
+                    </div>
+                    <div class="activity-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-trash3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DANH MỤC -->
+    <h5 class="activity-section-title">
+        <i class="bi bi-tags text-primary"></i>
+        Hoạt động danh mục
+    </h5>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Thêm danh mục</p>
+                        <h3 class="activity-stat-number text-success">@addCategory</h3>
+                    </div>
+                    <div class="activity-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-folder-plus"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Sửa danh mục</p>
+                        <h3 class="activity-stat-number text-warning">@editCategory</h3>
+                    </div>
+                    <div class="activity-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Xóa danh mục</p>
+                        <h3 class="activity-stat-number text-danger">@deleteCategory</h3>
+                    </div>
+                    <div class="activity-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-folder-x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- NHÀ CUNG CẤP -->
+    <h5 class="activity-section-title">
+        <i class="bi bi-truck text-primary"></i>
+        Hoạt động nhà cung cấp
+    </h5>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Thêm nhà cung cấp</p>
+                        <h3 class="activity-stat-number text-success">@addSupplier</h3>
+                    </div>
+                    <div class="activity-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Sửa nhà cung cấp</p>
+                        <h3 class="activity-stat-number text-warning">@editSupplier</h3>
+                    </div>
+                    <div class="activity-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-person-gear"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Xóa nhà cung cấp</p>
+                        <h3 class="activity-stat-number text-danger">@deleteSupplier</h3>
+                    </div>
+                    <div class="activity-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-person-x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- KIỂM KÊ -->
+    <h5 class="activity-section-title">
+        <i class="bi bi-clipboard-check text-primary"></i>
+        Hoạt động kiểm kê kho
+    </h5>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Tạo phiếu kiểm kê</p>
+                        <h3 class="activity-stat-number text-primary">@createInventoryCheck</h3>
+                    </div>
+                    <div class="activity-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-clipboard-plus"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card activity-stat-card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Xác nhận kiểm kê</p>
+                        <h3 class="activity-stat-number text-success">@confirmInventoryCheck</h3>
+                    </div>
+                    <div class="activity-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-clipboard2-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TÌM KIẾM VÀ LỌC -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-funnel-fill text-primary"></i>
+                Tìm kiếm và lọc
+            </h5>
+
+            <form asp-controller="ActivityLogs"
+                  asp-action="Index"
+                  method="get">
+
+                <div class="row g-3">
+
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label">Tìm kiếm</label>
+                        <input type="text"
+                               name="keyword"
+                               value="@ViewBag.Keyword"
+                               class="form-control"
+                               placeholder="Tài khoản, thao tác, nội dung..." />
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label">Tài khoản</label>
+                        <select name="userName" class="form-select">
+                            <option value="">Tất cả tài khoản</option>
+
+                            @if (ViewBag.Users != null)
+                            {
+                                foreach (string user in ViewBag.Users)
+                                {
+                                    if ((string?)ViewBag.UserName == user)
+                                    {
+                                        <option value="@user" selected>@user</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@user">@user</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date"
+                               name="fromDate"
+                               value="@ViewBag.FromDate"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date"
+                               name="toDate"
+                               value="@ViewBag.ToDate"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-lg-2 d-flex align-items-end gap-2">
+                        <button type="submit"
+                                class="btn btn-primary flex-fill">
+                            <i class="bi bi-search"></i>
+                            Lọc
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary"
+                           title="Làm mới">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DANH SÁCH NHẬT KÝ -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-journal-text text-primary"></i>
+                Danh sách hoạt động
+                <span class="badge bg-primary">@Model.Count()</span>
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle activity-table">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Tài khoản</th>
+                            <th>Hoạt động</th>
+                            <th>Nội dung</th>
+                            <th>Thời gian</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @{
+                            int index = 1;
+                        }
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5"
+                                    class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Chưa có hoạt động nào được ghi nhận.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@index</td>
+
+                                    <td class="fw-semibold">
+                                        <i class="bi bi-person-circle text-secondary me-1"></i>
+                                        @item.UserName
+                                    </td>
+
+                                    <td>
+                                        @switch (item.Action)
+                                        {
+                                            case "Nhập kho":
+                                                <span class="activity-badge bg-success text-white">
+                                                    <i class="bi bi-box-arrow-in-down"></i>
+                                                    Nhập kho
+                                                </span>
+                                                break;
+
+                                            case "Xuất kho":
+                                                <span class="activity-badge bg-danger text-white">
+                                                    <i class="bi bi-box-arrow-up"></i>
+                                                    Xuất kho
+                                                </span>
+                                                break;
+
+                                            case "Điều chuyển kho":
+                                                <span class="activity-badge bg-info text-dark">
+                                                    <i class="bi bi-arrow-left-right"></i>
+                                                    Điều chuyển kho
+                                                </span>
+                                                break;
+
+                                            case "Đăng nhập":
+                                                <span class="activity-badge bg-primary text-white">
+                                                    <i class="bi bi-box-arrow-in-right"></i>
+                                                    Đăng nhập
+                                                </span>
+                                                break;
+
+                                            case "Đăng xuất":
+                                                <span class="activity-badge bg-secondary text-white">
+                                                    <i class="bi bi-box-arrow-right"></i>
+                                                    Đăng xuất
+                                                </span>
+                                                break;
+
+                                            case "Thêm sản phẩm":
+                                            case "Thêm danh mục":
+                                            case "Thêm nhà cung cấp":
+                                                <span class="activity-badge bg-success text-white">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    @item.Action
+                                                </span>
+                                                break;
+
+                                            case "Sửa sản phẩm":
+                                            case "Sửa danh mục":
+                                            case "Sửa nhà cung cấp":
+                                                <span class="activity-badge bg-warning text-dark">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    @item.Action
+                                                </span>
+                                                break;
+
+                                            case "Xóa sản phẩm":
+                                            case "Xóa danh mục":
+                                            case "Xóa nhà cung cấp":
+                                                <span class="activity-badge bg-danger text-white">
+                                                    <i class="bi bi-trash3"></i>
+                                                    @item.Action
+                                                </span>
+                                                break;
+
+                                            case "Tạo phiếu kiểm kê":
+                                                <span class="activity-badge bg-primary text-white">
+                                                    <i class="bi bi-clipboard-plus"></i>
+                                                    @item.Action
+                                                </span>
+                                                break;
+
+                                            case "Xác nhận kiểm kê":
+                                                <span class="activity-badge bg-success text-white">
+                                                    <i class="bi bi-clipboard2-check"></i>
+                                                    @item.Action
+                                                </span>
+                                                break;
+
+                                            default:
+                                                <span class="activity-badge bg-dark text-white">
+                                                    <i class="bi bi-info-circle"></i>
+                                                    @item.Action
+                                                </span>
+                                                break;
+                                        }
+                                    </td>
+
+                                    <td>@item.Description</td>
+
+                                    <td class="text-nowrap">
+                                        <i class="bi bi-calendar3 text-muted"></i>
+                                        @item.CreatedAt.ToString("dd/MM/yyyy")
+                                        <br />
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i>
+                                            @item.CreatedAt.ToString("HH:mm:ss")
+                                        </small>
+                                    </td>
+                                </tr>
+
+                                index++;
+                            }
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>

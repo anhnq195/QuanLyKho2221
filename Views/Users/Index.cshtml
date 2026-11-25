@@ -1,0 +1,171 @@
+﻿@model List<QuanLyKho2221.Models.UserViewModel>
+
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Quản lý tài khoản</h2>
+            <p class="text-muted">Quản lý người dùng và phân quyền hệ thống</p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-success">
+            + Thêm tài khoản
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="d-flex gap-2">
+                <input type="text"
+                       name="keyword"
+                       value="@ViewBag.Keyword"
+                       class="form-control"
+                       placeholder="Tìm theo tên đăng nhập hoặc email..." />
+
+                <button type="submit" class="btn btn-primary">
+                    Tìm kiếm
+                </button>
+
+                <a asp-action="Index" class="btn btn-secondary">
+                    Làm mới
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-primary">
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên đăng nhập</th>
+                            <th>Email</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th style="min-width: 270px">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model != null && Model.Count > 0)
+                        {
+                            int stt = 1;
+
+                            foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td>@stt</td>
+                                    <td class="fw-semibold">@user.UserName</td>
+                                    <td>@user.Email</td>
+
+                                    <td>
+                                        @if (user.Role.Contains("Admin"))
+                                        {
+                                            <span class="badge bg-warning text-dark">ADMIN</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info text-dark">EMPLOYEE</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (user.IsLocked)
+                                        {
+                                            <span class="badge bg-danger">Đã khóa</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Hoạt động</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@user.Id"
+                                               class="btn btn-sm btn-primary">
+                                                Sửa
+                                            </a>
+
+                                            <a asp-action="ResetPassword"
+                                               asp-route-id="@user.Id"
+                                               class="btn btn-sm btn-warning">
+                                                Đổi mật khẩu
+                                            </a>
+
+                                            @if (user.Role != "Admin" &&
+                                                 user.UserName != User.Identity?.Name)
+                                            {
+                                                <form asp-action="ToggleLock"
+                                                      method="post"
+                                                      onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái tài khoản này?');">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@user.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm @(user.IsLocked ? "btn-success" : "btn-secondary")">
+                                                        @(user.IsLocked ? "Mở khóa" : "Khóa")
+                                                    </button>
+                                                </form>
+
+                                                <form asp-action="Delete"
+                                                      method="post"
+                                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này không?');">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@user.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-danger">
+                                                        Xóa
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                stt++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    Không tìm thấy tài khoản nào.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

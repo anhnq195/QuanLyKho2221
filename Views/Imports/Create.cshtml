@@ -1,0 +1,278 @@
+@model QuanLyKho2221.Models.ImportReceipt
+
+@{
+    ViewData["Title"] = "Tạo phiếu nhập kho";
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-plus-circle text-primary me-2"></i>
+                Tạo phiếu nhập kho
+            </h2>
+            <p class="text-muted mb-0">
+                Nhập thông tin hàng hóa cần nhập vào kho.
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Phiếu sau khi tạo sẽ ở trạng thái <strong>Chờ duyệt</strong>.
+        Tồn kho chỉ được cập nhật sau khi Admin duyệt phiếu.
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"></div>
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                    Thông tin phiếu nhập
+                </h5>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nhà cung cấp</label>
+                        <select asp-for="SupplierId"
+                                asp-items="ViewBag.SupplierId"
+                                class="form-select">
+                            <option value="">-- Chọn nhà cung cấp --</option>
+                        </select>
+                        <span asp-validation-for="SupplierId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Sản phẩm (Theo nhà cung cấp)</label>
+                        <select asp-for="ProductId"
+                                asp-items="ViewBag.ProductId"
+                                class="form-select">
+                            <option value="">-- Vui lòng chọn nhà cung cấp trước --</option>
+                        </select>
+                        <span asp-validation-for="ProductId" class="text-danger"></span>
+                        <div id="supplierProductHint" class="form-text small text-muted">
+                            Hệ thống chỉ hiển thị những sản phẩm do nhà cung cấp đã chọn cung ứng.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold mb-0">Ô chứa</label>
+                            <button type="button" id="btnSuggestBin" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold">
+                                <i class="bi bi-magic me-1"></i>Gợi ý vị trí trống tối ưu
+                            </button>
+                        </div>
+                        <select asp-for="WarehouseBinId"
+                                asp-items="ViewBag.WarehouseBinId"
+                                class="form-select">
+                            <option value="">-- Chọn vị trí lưu kho --</option>
+                        </select>
+                        <span asp-validation-for="WarehouseBinId" class="text-danger"></span>
+
+                        <!-- KHU VỰC HIỂN THỊ GỢI Ý VỊ TRÍ (T66) -->
+                        <div id="binSuggestionBox" class="mt-2 p-2 bg-light border rounded small" style="display:none;">
+                            <div class="fw-semibold text-primary mb-2">
+                                <i class="bi bi-stars me-1"></i>Đề xuất vị trí lưu trữ tối ưu (Click để chọn):
+                            </div>
+                            <div id="binSuggestionList" class="d-flex flex-column gap-1"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Mã lô hàng</label>
+                        <input asp-for="BatchCode"
+                               class="form-control"
+                               readonly />
+                        <span asp-validation-for="BatchCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Ngày sản xuất</label>
+                        <input asp-for="ManufactureDate"
+                               type="date"
+                               class="form-control" />
+                        <span asp-validation-for="ManufactureDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Hạn sử dụng</label>
+                        <input asp-for="ExpiryDate"
+                               type="date"
+                               class="form-control" />
+                        <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Số lượng nhập</label>
+                        <input asp-for="Quantity"
+                               type="number"
+                               min="1"
+                               class="form-control"
+                               placeholder="Nhập số lượng" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Ghi chú</label>
+                        <textarea asp-for="Note"
+                                  class="form-control"
+                                  rows="3"
+                                  maxlength="500"
+                                  placeholder="Nhập ghi chú nếu có..."></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Hủy
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>
+                        Tạo phiếu nhập
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const btnSuggest = document.getElementById('btnSuggestBin');
+            const supplierSelect = document.getElementById('SupplierId');
+            const productSelect = document.getElementById('ProductId');
+            const supplierHint = document.getElementById('supplierProductHint');
+            const qtyInput = document.getElementById('Quantity');
+            const binSelect = document.getElementById('WarehouseBinId');
+            const box = document.getElementById('binSuggestionBox');
+            const list = document.getElementById('binSuggestionList');
+
+            function esc(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            async function loadProductsBySupplier(supplierId, preserveProductId) {
+                if (!supplierId) {
+                    productSelect.innerHTML = '<option value="">-- Vui lòng chọn nhà cung cấp trước --</option>';
+                    productSelect.disabled = true;
+                    if (supplierHint) {
+                        supplierHint.innerHTML = 'Hệ thống chỉ hiển thị những sản phẩm do nhà cung cấp đã chọn cung ứng.';
+                    }
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/Imports/GetProductsBySupplier?supplierId=' + encodeURIComponent(supplierId));
+                    const data = await res.json();
+                    const prods = data.products || [];
+
+                    if (prods.length === 0) {
+                        productSelect.innerHTML = '<option value="">-- Nhà cung cấp này chưa đăng ký mặt hàng nào --</option>';
+                        productSelect.disabled = true;
+                        if (supplierHint) {
+                            supplierHint.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Nhà cung cấp này chưa được gán sản phẩm. <a href="/Suppliers/Edit/${encodeURIComponent(supplierId)}" class="fw-semibold">Bấm vào đây để gán sản phẩm cho nhà cung cấp</a>.</span>`;
+                        }
+                        return;
+                    }
+
+                    productSelect.disabled = false;
+                    productSelect.innerHTML = '<option value="">-- Chọn sản phẩm của nhà cung cấp --</option>' +
+                        prods.map(p => `<option value="${p.id}" ${String(p.id) === String(preserveProductId) ? 'selected' : ''}>${esc(p.code)} - ${esc(p.name)}</option>`).join('');
+
+                    if (supplierHint) {
+                        supplierHint.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Nhà cung cấp này được phép cung ứng <strong>${prods.length}</strong> mặt hàng.</span>`;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            supplierSelect?.addEventListener('change', function () {
+                loadProductsBySupplier(this.value, null);
+            });
+
+            // Khởi tạo trạng thái khi mở trang
+            if (supplierSelect) {
+                const initialProd = productSelect?.value || '';
+                loadProductsBySupplier(supplierSelect.value, initialProd);
+            }
+
+            async function loadSuggestions(autoSelectFirst) {
+                const productId = productSelect.value || '';
+                const qty = parseInt(qtyInput.value) || 1;
+
+                try {
+                    const res = await fetch(`/Imports/SuggestBinLocation?productId=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(qty)}`);
+                    const data = await res.json();
+
+                    if (!data.success) return;
+
+                    const items = data.suggestions || [];
+                    if (items.length === 0) {
+                        list.innerHTML = `<div class="text-danger">Không tìm thấy ô chứa nào còn đủ ${qty} chỗ trống!</div>`;
+                        box.style.display = 'block';
+                        return;
+                    }
+
+                    list.innerHTML = items.map((s, idx) => `
+                        <button type="button" class="btn btn-sm btn-outline-primary text-start d-flex justify-content-between align-items-center suggest-item" data-id="${s.binId}">
+                            <div>
+                                <div class="fw-bold">${idx === 0 ? '★ ' : ''}${esc(s.location)}</div>
+                                <div class="text-muted" style="font-size:11px;">${esc(s.reason)}</div>
+                            </div>
+                            <span class="badge bg-success ms-2">Trống ${s.freeSpace}/${s.maxCapacity}</span>
+                        </button>
+                    `).join('');
+
+                    box.style.display = 'block';
+
+                    if (autoSelectFirst && items.length > 0 && !binSelect.value) {
+                        binSelect.value = items[0].binId;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            btnSuggest.addEventListener('click', () => loadSuggestions(true));
+            productSelect.addEventListener('change', () => {
+                if (productSelect.value) loadSuggestions(false);
+            });
+
+            list.addEventListener('click', e => {
+                const btn = e.target.closest('.suggest-item');
+                if (btn) {
+                    binSelect.value = btn.dataset.id;
+                    box.style.display = 'none';
+                }
+            });
+        })();
+    </script>
+}

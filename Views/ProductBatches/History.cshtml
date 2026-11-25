@@ -1,0 +1,251 @@
+@model QuanLyKho2221.Models.ProductBatch
+@{
+    ViewData["Title"] = "Truy xuất vòng đời lô hàng";
+    var imports = ViewBag.Imports as List<QuanLyKho2221.Models.ImportReceipt> ?? new();
+    var exports = ViewBag.Exports as List<QuanLyKho2221.Models.ExportReceipt> ?? new();
+    var transfers = ViewBag.Transfers as List<QuanLyKho2221.Models.WarehouseTransfer> ?? new();
+    var checks = ViewBag.Checks as List<QuanLyKho2221.Models.InventoryCheckDetail> ?? new();
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-diagram-3-fill text-primary me-2"></i>
+                Truy xuất Nguồn gốc & Vòng đời Lô hàng (Batch Genealogy)
+            </h3>
+            <p class="text-muted small mb-0">
+                Theo dõi toàn bộ hành trình từ khi nhập kho từ Nhà cung cấp, điều chuyển kệ, kiểm kê cho đến khi xuất tới tay khách hàng.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Scanner" asp-action="Labels" asp-route-batchIds="@Model.Id" target="_blank" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-qr-code me-1"></i> In tem QR / Barcode
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Danh sách lô hàng
+            </a>
+        </div>
+    </div>
+
+    <!-- THÔNG TIN ĐỊNH DANH LÔ -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <div class="text-muted small">Mã lô hàng (Batch Code)</div>
+                    <h4 class="fw-bold text-primary font-monospace mb-0">@Model.BatchCode</h4>
+                    <span class="badge bg-light text-dark border font-monospace mt-1">WMS-B@(Model.Id)</span>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Sản phẩm &amp; Mã SKU</div>
+                    <a asp-controller="Products"
+                       asp-action="Details"
+                       asp-route-id="@Model.ProductId"
+                       class="fw-bold fs-6 text-primary text-decoration-none d-block">
+                        @Model.Product?.Name
+                    </a>
+                    <a asp-controller="Products"
+                       asp-action="Details"
+                       asp-route-id="@Model.ProductId"
+                       class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-decoration-none mt-1">
+                        SKU: @(string.IsNullOrWhiteSpace(Model.Product?.Code) ? $"SP-{Model.ProductId:D4}" : Model.Product.Code)
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Vị trí hiện tại</div>
+                    <div class="fw-semibold">
+                        @Model.WarehouseBin?.WarehouseShelf?.WarehouseArea?.Warehouse?.Name ›
+                        @Model.WarehouseBin?.WarehouseShelf?.Name › Ô @Model.WarehouseBin?.Code
+                    </div>
+                    <div class="small text-muted">
+                        NSX: @(Model.ManufactureDate?.ToString("dd/MM/yyyy") ?? "—") •
+                        HSD: @(Model.ExpiryDate?.ToString("dd/MM/yyyy") ?? "Không có")
+                    </div>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <div class="text-muted small">Số lượng tồn hiện tại</div>
+                    <h2 class="fw-bold text-success mb-0">@Model.Quantity.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- 1. LỊCH SỬ NHẬP KHO -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-box-arrow-in-down text-success me-1"></i>
+                    1. Nguồn gốc Nhập kho từ Nhà cung cấp (@imports.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Nhà cung cấp</th>
+                                <th class="text-center">SL nhập</th>
+                                <th>Trạng thái</th>
+                                <th>Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!imports.Any())
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Lô khởi tạo trực tiếp / Không có phiếu nhập.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var r in imports)
+                                {
+                                    <tr>
+                                        <td><a asp-controller="Imports" asp-action="Details" asp-route-id="@r.Id" class="fw-bold">@r.ReceiptCode</a></td>
+                                        <td>@r.Supplier?.Name</td>
+                                        <td class="text-center fw-bold text-success">+@r.Quantity</td>
+                                        <td><span class="badge bg-secondary">@r.Status</span></td>
+                                        <td class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LỊCH SỬ XUẤT KHO -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-box-arrow-up text-danger me-1"></i>
+                    2. Lịch sử Xuất kho cho Khách hàng (@exports.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Người nhận</th>
+                                <th class="text-center">SL xuất</th>
+                                <th>Trạng thái</th>
+                                <th>Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!exports.Any())
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Chưa có giao dịch xuất kho từ lô này.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var r in exports)
+                                {
+                                    <tr>
+                                        <td><a asp-controller="Exports" asp-action="Details" asp-route-id="@r.Id" class="fw-bold text-danger">@r.ReceiptCode</a></td>
+                                        <td>@(r.Receiver ?? "—")</td>
+                                        <td class="text-center fw-bold text-danger">-@r.Quantity</td>
+                                        <td><span class="badge bg-secondary">@r.Status</span></td>
+                                        <td class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. LỊCH SỬ ĐIỀU CHUYỂN VỊ TRÍ -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-arrow-left-right text-info me-1"></i>
+                    3. Lịch sử Điều chuyển vị trí Ô kệ (@transfers.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã ĐC</th>
+                                <th>Từ ô &rarr; Đến ô</th>
+                                <th class="text-center">Số lượng</th>
+                                <th>Người chuyển</th>
+                                <th>Ngày chuyển</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!transfers.Any())
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Chưa từng điều chuyển vị trí.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var t in transfers)
+                                {
+                                    <tr>
+                                        <td class="font-monospace fw-bold">@t.TransferCode</td>
+                                        <td>Ô @t.SourceBin?.Code &rarr; Ô @t.DestinationBin?.Code</td>
+                                        <td class="text-center fw-bold">@t.Quantity</td>
+                                        <td>@t.CreatedBy</td>
+                                        <td class="text-muted">@t.TransferDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. LỊCH SỬ KIỂM KÊ -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-clipboard-check text-warning me-1"></i>
+                    4. Lịch sử Kiểm kê Thực tế (@checks.Count)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã phiếu KK</th>
+                                <th class="text-center">Sổ sách</th>
+                                <th class="text-center">Thực tế</th>
+                                <th class="text-center">Chênh lệch</th>
+                                <th>Ngày kiểm kê</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!checks.Any())
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Chưa có đợt kiểm kê nào trên lô này.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var c in checks)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="InventoryChecks" asp-action="Details" asp-route-id="@c.InventoryCheckId" class="fw-bold">
+                                                @c.InventoryCheck?.CheckCode
+                                            </a>
+                                        </td>
+                                        <td class="text-center">@c.SystemQuantity</td>
+                                        <td class="text-center fw-bold">@c.ActualQuantity</td>
+                                        <td class="text-center fw-bold @(c.Difference == 0 ? "text-success" : "text-danger")">
+                                            @(c.Difference > 0 ? $"+{c.Difference}" : c.Difference.ToString())
+                                        </td>
+                                        <td class="text-muted">@c.InventoryCheck?.CheckDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,358 @@
+@model QuanLyKho2221.Models.ExportReceipt
+
+@{
+    ViewData["Title"] = "Tạo phiếu xuất kho";
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-box-arrow-up text-primary me-2"></i>
+                Lập phiếu xuất kho
+            </h2>
+            <p class="text-muted mb-0">
+                Hỗ trợ xuất kho thông minh tự động phân bổ lô theo quy tắc FEFO / FIFO / LIFO hoặc chọn lô thủ công.
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại danh sách
+        </a>
+    </div>
+
+    <!-- TABS CHỌN CHẾ ĐỘ XUẤT -->
+    <ul class="nav nav-pills mb-4" id="exportTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active px-4 py-2 fw-semibold" id="auto-tab" data-bs-toggle="pill" data-bs-target="#auto-pane" type="button" role="tab">
+                <i class="bi bi-cpu text-primary me-2"></i>
+                Xuất tự động theo Quy tắc (FEFO / FIFO / LIFO)
+                <span class="badge bg-primary ms-1">Đề xuất</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link px-4 py-2 fw-semibold" id="manual-tab" data-bs-toggle="pill" data-bs-target="#manual-pane" type="button" role="tab">
+                <i class="bi bi-hand-index-thumb me-2"></i>
+                Chọn lô hàng thủ công
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="exportTabsContent">
+
+        <!-- TAB 1: XUẤT TỰ ĐỘNG THEO QUY TẮC -->
+        <div class="tab-pane fade show active" id="auto-pane" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <form asp-action="CreateAuto" method="post" id="autoExportForm">
+                                @Html.AntiForgeryToken()
+
+                                <h5 class="fw-bold text-primary mb-3">
+                                    <i class="bi bi-sliders me-2"></i>
+                                    1. Cấu hình quy tắc & Hàng hóa cần xuất
+                                </h5>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">
+                                        Chọn sản phẩm cần xuất <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="ProductId" id="autoProductId" class="form-select" asp-items="ViewBag.ProductId" required>
+                                        <option value="">-- Chọn sản phẩm trong kho --</option>
+                                    </select>
+                                    <div class="form-text small">
+                                        Hệ thống sẽ tự động quét toàn bộ các lô còn tồn của sản phẩm này trên các kho.
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            Quy tắc xuất kho <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="Rule" id="autoRule" class="form-select">
+                                            <option value="FEFO" selected>FEFO (First Expired, First Out - Ưu tiên cận date)</option>
+                                            <option value="FIFO">FIFO (First In, First Out - Ưu tiên nhập trước)</option>
+                                            <option value="LIFO">LIFO (Last In, First Out - Ưu tiên nhập sau)</option>
+                                        </select>
+                                        <div class="form-text small">
+                                            Hàng có hạn sử dụng nên xuất theo <strong>FEFO</strong> để tránh hết hạn.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            Số lượng cần xuất <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" name="Quantity" id="autoQuantity" min="1" class="form-control" placeholder="Nhập số lượng xuất..." required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnPreview">
+                                        <i class="bi bi-eye me-1"></i>
+                                        Tính toán & Xem trước phân bổ lô
+                                    </button>
+                                </div>
+
+                                <!-- KHU VỰC PREVIEW PHÂN BỔ LÔ -->
+                                <div id="previewContainer" class="p-3 bg-light rounded border mb-4" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="fw-bold mb-0 text-dark">
+                                            <i class="bi bi-diagram-3-fill text-success me-1"></i>
+                                            Kế hoạch phân bổ trích xuất lô:
+                                        </h6>
+                                        <span id="allocationStatusBadge" class="badge"></span>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered bg-white mb-2" id="previewTable">
+                                            <thead class="table-light small">
+                                                <tr>
+                                                    <th>Mã lô</th>
+                                                    <th>Vị trí ô kệ</th>
+                                                    <th>Hạn sử dụng</th>
+                                                    <th class="text-center">Tồn khả dụng</th>
+                                                    <th class="text-center text-primary">Lấy từ lô này</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="small" id="previewBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div id="allocationMessage" class="small text-muted"></div>
+                                </div>
+
+                                <hr class="my-4" />
+
+                                <h5 class="fw-bold text-primary mb-3">
+                                    <i class="bi bi-truck me-2"></i>
+                                    2. Thông tin đối tác & Vận chuyển
+                                </h5>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Người nhận hàng / Khách hàng</label>
+                                    <input type="text" name="Receiver" class="form-control" placeholder="Tên khách hàng, đại lý hoặc tài xế..." />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Ghi chú xuất kho</label>
+                                    <textarea name="Note" rows="3" class="form-control" placeholder="Nhập lý do xuất hàng, số đơn hàng hoặc mã vận đơn..."></textarea>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary px-4" id="btnSubmitAuto">
+                                        <i class="bi bi-check2-circle me-1"></i>
+                                        Lập phiếu xuất tự động
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-outline-secondary">Hủy bỏ</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIDEBAR HƯỚNG DẪN QUY TẮC -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-header bg-primary text-white fw-semibold">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Quy tắc xuất kho WMS chuẩn
+                        </div>
+                        <div class="card-body small">
+                            <div class="mb-3">
+                                <span class="badge bg-success me-1">FEFO</span>
+                                <strong>First Expired, First Out</strong>
+                                <p class="text-muted mb-0 mt-1">
+                                    Lô hàng nào có hạn sử dụng gần nhất sẽ được trích xuất trước. Bắt buộc đối với dược phẩm, thực phẩm, mỹ phẩm.
+                                </p>
+                            </div>
+                            <hr />
+                            <div class="mb-3">
+                                <span class="badge bg-primary me-1">FIFO</span>
+                                <strong>First In, First Out</strong>
+                                <p class="text-muted mb-0 mt-1">
+                                    Lô hàng nhập vào kho trước sẽ xuất trước theo thứ tự thời gian. Phù hợp linh kiện điện tử, đồ gia dụng.
+                                </p>
+                            </div>
+                            <hr />
+                            <div>
+                                <span class="badge bg-secondary me-1">LIFO</span>
+                                <strong>Last In, First Out</strong>
+                                <p class="text-muted mb-0 mt-1">
+                                    Lô hàng nhập sau cùng sẽ được lấy ra trước. Thường áp dụng cho hàng nặng xếp chồng (gạch, cát, vật liệu xây dựng).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small shadow-sm">
+                        <i class="bi bi-shield-check fs-5 me-1 align-middle"></i>
+                        <strong>Cơ chế an toàn:</strong> Khi phiếu xuất được lập, số lượng tại từng lô được giữ chỗ ngay (`Pending`). Hàng sẽ chỉ bị trừ thực tế khi Quản lý kho ấn Duyệt (`Approve`).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CHỌN LÔ THỦ CÔNG (TRUYỀN THỐNG) -->
+        <div class="tab-pane fade" id="manual-pane" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <form asp-action="Create" method="post">
+                                @Html.AntiForgeryToken()
+
+                                <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+                                <h5 class="fw-bold mb-3 text-primary">
+                                    <i class="bi bi-box-seam me-2"></i>
+                                    Chọn lô hàng cụ thể
+                                </h5>
+
+                                <div class="mb-4">
+                                    <label asp-for="ProductBatchId" class="form-label fw-semibold">
+                                        Sản phẩm và lô hàng <span class="text-danger">*</span>
+                                    </label>
+                                    <select asp-for="ProductBatchId" asp-items="ViewBag.ProductBatchId" class="form-select">
+                                        <option value="">-- Chọn lô hàng cần xuất --</option>
+                                    </select>
+                                    <span asp-validation-for="ProductBatchId" class="text-danger small"></span>
+                                    <div class="form-text mt-2 small text-muted">
+                                        Chỉ hiển thị các lô hàng còn tồn khả dụng trong kho.
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Quantity" class="form-label fw-semibold">
+                                        Số lượng xuất <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="Quantity" type="number" min="1" class="form-control" placeholder="Nhập số lượng cần xuất..." />
+                                    <span asp-validation-for="Quantity" class="text-danger small"></span>
+                                </div>
+
+                                <hr class="my-4" />
+
+                                <h5 class="fw-bold mb-3 text-primary">
+                                    <i class="bi bi-truck me-2"></i>
+                                    Thông tin giao hàng
+                                </h5>
+
+                                <div class="mb-3">
+                                    <label asp-for="Receiver" class="form-label fw-semibold">Người nhận hàng</label>
+                                    <input asp-for="Receiver" class="form-control" placeholder="Nhập tên người nhận hàng..." />
+                                    <span asp-validation-for="Receiver" class="text-danger small"></span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Note" class="form-label fw-semibold">Ghi chú</label>
+                                    <textarea asp-for="Note" class="form-control" rows="3" placeholder="Nhập ghi chú xuất kho..."></textarea>
+                                    <span asp-validation-for="Note" class="text-danger small"></span>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="bi bi-save me-1"></i> Lưu phiếu xuất
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-outline-secondary">Hủy bỏ</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const productSelect = document.getElementById('autoProductId');
+            const ruleSelect = document.getElementById('autoRule');
+            const quantityInput = document.getElementById('autoQuantity');
+            const btnPreview = document.getElementById('btnPreview');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewBody = document.getElementById('previewBody');
+            const allocationBadge = document.getElementById('allocationStatusBadge');
+            const allocationMsg = document.getElementById('allocationMessage');
+            const btnSubmit = document.getElementById('btnSubmitAuto');
+
+            async function fetchPreview() {
+                const productId = productSelect.value;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const rule = ruleSelect.value;
+
+                if (!productId || quantity <= 0) {
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/Exports/PreviewRuleAllocation?productId=${productId}&quantity=${quantity}&rule=${rule}`);
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        previewContainer.style.display = 'none';
+                        return;
+                    }
+
+                    const plan = data.plan;
+                    previewBody.innerHTML = '';
+
+                    if (plan.allocations && plan.allocations.length > 0) {
+                        plan.allocations.forEach(item => {
+                            const expiryStr = item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('vi-VN') : 'Không có';
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><span class="badge bg-light text-dark border font-monospace">${item.batchCode}</span></td>
+                                <td class="text-muted small">${item.locationName}</td>
+                                <td>${expiryStr}</td>
+                                <td class="text-center">${item.availableQuantity}</td>
+                                <td class="text-center fw-bold text-primary fs-6">+${item.allocatedQuantity}</td>
+                            `;
+                            previewBody.appendChild(row);
+                        });
+
+                        if (plan.isSufficient) {
+                            allocationBadge.className = 'badge bg-success';
+                            allocationBadge.innerText = 'ĐỦ HÀNG TRÍCH XUẤT';
+                            allocationMsg.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Hệ thống đã phân bổ đủ <strong>${plan.totalAllocatedQuantity}</strong> / ${plan.requestedQuantity} sản phẩm theo quy tắc <strong>${plan.rule}</strong>.</span>`;
+                            btnSubmit.disabled = false;
+                        } else {
+                            allocationBadge.className = 'badge bg-danger';
+                            allocationBadge.innerText = 'THIẾU HÀNG';
+                            allocationMsg.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Kho chỉ còn <strong>${plan.totalAllocatedQuantity}</strong> khả dụng, còn thiếu <strong>${plan.shortageQuantity}</strong> sản phẩm.</span>`;
+                            btnSubmit.disabled = true;
+                        }
+                    } else {
+                        previewBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-2">Không tìm thấy lô hàng khả dụng nào để xuất theo quy tắc này!</td></tr>`;
+                        allocationBadge.className = 'badge bg-danger';
+                        allocationBadge.innerText = 'KHÔNG CÓ HÀNG';
+                        allocationMsg.innerHTML = `<span class="text-danger">Toàn bộ các lô đã hết hàng hoặc đã hết hạn sử dụng.</span>`;
+                        btnSubmit.disabled = true;
+                    }
+
+                    previewContainer.style.display = 'block';
+                } catch (err) {
+                    console.error('Lỗi khi tải phân bổ:', err);
+                }
+            }
+
+            btnPreview.addEventListener('click', fetchPreview);
+            productSelect.addEventListener('change', fetchPreview);
+            ruleSelect.addEventListener('change', fetchPreview);
+            quantityInput.addEventListener('input', function() {
+                if (quantityInput.value > 0) {
+                    fetchPreview();
+                }
+            });
+        });
+    </script>
+}
